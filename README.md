@@ -2,6 +2,8 @@
 
 Utilitários brasileiros em TypeScript 7, ESM/CJS e **sem dependências de produção**.
 
+[Playground interativo](https://github.com/marcuslma/brazilian-tools-playground) para testar as funções no navegador.
+
 ## Recursos
 
 - normalização, validação, geração e formatação de CPF, CNPJ e RG;
@@ -38,6 +40,55 @@ CommonJS:
 
 ```js
 const { validateCPF } = require('brazilian-tools');
+```
+
+### Imports por domínio e tree-shaking
+
+O pacote publica subpaths por domínio para imports mais explícitos:
+
+```ts
+import { validateCPF } from 'brazilian-tools/cpf';
+import { lookupCEP } from 'brazilian-tools/cep';
+import { parsePhoneBR } from 'brazilian-tools/phone';
+```
+
+Os mesmos subpaths funcionam em CommonJS:
+
+```js
+const { validateCPF } = require('brazilian-tools/cpf');
+```
+
+O caminho ESM usa exports nomeados, módulos separados e `sideEffects: false`. Bundlers como Vite, Rollup, esbuild e webpack podem remover os domínios e funções que não forem importados. Prefira imports nomeados e estáticos; evite carregar o namespace inteiro quando não for necessário:
+
+```ts
+// recomendado
+import { validateCPF } from 'brazilian-tools';
+
+// menos explícito para tree-shaking
+import * as BrazilianTools from 'brazilian-tools';
+```
+
+## NestJS e CommonJS
+
+Projetos NestJS configurados com `module: "commonjs"` podem usar o pacote sem configuração adicional:
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { formatCPF, validateCPF } from 'brazilian-tools';
+
+@Injectable()
+export class DocumentsService {
+  validateCPF(value: string): { valid: boolean; formatted?: string } {
+    const valid = validateCPF(value);
+    return { valid, formatted: valid ? formatCPF(value) : undefined };
+  }
+}
+```
+
+O TypeScript compila esse import para o caminho `require` publicado pelo pacote. Em projetos que usam `require` diretamente, a forma equivalente é:
+
+```js
+const { formatCPF, validateCPF } = require('brazilian-tools');
 ```
 
 ## Uso
@@ -199,6 +250,32 @@ const addresses = await lookupCEPs(['01001000', '20040002'], {
 - `CEPRequestError` para falhas de rede, timeout, HTTP, resposta inválida ou cache injetado.
 
 Os erros de consulta expõem `provider` e, quando aplicável, `status` HTTP. Falhas de cache preservam o erro original em `cause`. As consultas usam somente APIs públicas e não exigem chave de acesso, mas não possuem SLA. Endereços críticos devem continuar editáveis e confirmáveis pelo usuário.
+
+Exemplo de timeout, cancelamento e tratamento de erro:
+
+```ts
+const controller = new AbortController();
+const timeout = setTimeout(() => controller.abort(), 3_000);
+
+try {
+  const address = await lookupCEP('01001-000', {
+    provider: 'auto',
+    signal: controller.signal,
+    timeoutMs: 5_000,
+  });
+  console.log(address.street, address.city, address.provider);
+} catch (error) {
+  if (error instanceof CEPNotFoundError) {
+    console.log('CEP não encontrado.');
+  } else if (error instanceof CEPRequestError) {
+    console.error(error.provider, error.status, error.message);
+  }
+} finally {
+  clearTimeout(timeout);
+}
+```
+
+O cache é responsabilidade do consumidor e suas operações podem ser assíncronas. O cache não possui deduplicação automática de chamadas simultâneas e não entra no orçamento de `timeoutMs`.
 
 ## Desenvolvimento
 
