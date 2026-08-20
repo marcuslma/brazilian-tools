@@ -1,0 +1,71 @@
+{
+  "name": "brazilian-tools",
+  "version": "0.1.0",
+  "description": "Utilitários brasileiros sem dependências de produção: CPF, CNPJ, RG, telefone e CEP.",
+  "author": "Marcus Maurmann",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcuslma/brazilian-tools.git"
+  },
+  "homepage": "https://github.com/marcuslma/brazilian-tools#readme",
+  "bugs": {
+    "url": "https://github.com/marcuslma/brazilian-tools/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "test:coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=95 test/*.test.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{json,md,mjs,ts,yml}\"",
+    "format:check": "prettier --check \"**/*.{json,md,mjs,ts,yml}\"",
+    "smoke:package": "node scripts/package-smoke.mjs",
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm run test:coverage && npm run smoke:package && npm pack --dry-run",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm test"
+  },
+  "keywords": [
+    "brasil",
+    "cpf",
+    "cnpj",
+    "rg",
+    "telefone",
+    "phone",
+    "cep",
+    "typescript"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.11.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2"
+  }
+}
