@@ -27,7 +27,7 @@ Utilitários brasileiros em TypeScript 7, ESM/CJS e **sem dependências de produ
 - Node.js 20 ou superior;
 - projeto consumidor ESM, CommonJS ou bundler compatível.
 
-O pacote publica os formatos ESM e CommonJS. Use `import` em projetos ESM/bundlers ou `require()` em projetos CommonJS, como configurações padrão do NestJS.
+O pacote publica os formatos ESM e CommonJS. Use `import` em projetos ESM/bundlers ou `require()` em projetos CommonJS.
 
 ## Instalação
 
@@ -71,29 +71,6 @@ import { validateCPF } from 'brazilian-tools';
 
 // menos explícito para tree-shaking
 import * as BrazilianTools from 'brazilian-tools';
-```
-
-## NestJS e CommonJS
-
-Projetos NestJS configurados com `module: "commonjs"` podem usar o pacote sem configuração adicional:
-
-```ts
-import { Injectable } from '@nestjs/common';
-import { formatCPF, validateCPF } from 'brazilian-tools';
-
-@Injectable()
-export class DocumentsService {
-  validateCPF(value: string): { valid: boolean; formatted?: string } {
-    const valid = validateCPF(value);
-    return { valid, formatted: valid ? formatCPF(value) : undefined };
-  }
-}
-```
-
-O TypeScript compila esse import para o caminho `require` publicado pelo pacote. Em projetos que usam `require` diretamente, a forma equivalente é:
-
-```js
-const { formatCPF, validateCPF } = require('brazilian-tools');
 ```
 
 ## Uso
