@@ -9,6 +9,11 @@ Utilitários brasileiros em TypeScript 7, ESM/CJS e **sem dependências de produ
 - normalização, validação, geração e formatação de CPF, CNPJ e RG;
 - validação, geração e formatação de CNPJ numérico;
 - suporte ao novo CNPJ alfanumérico (12 posições alfanuméricas + 2 verificadores numéricos);
+- validação, geração e formatação de PIS/PASEP/NIT;
+- validação, geração e formatação de CNH;
+- validação, normalização, formatação e parsing de placas antigas e Mercosul;
+- formatação e parsing de valores em reais;
+- catálogo estático de estados, regiões, capitais e códigos IBGE;
 - validação algorítmica de RG de São Paulo;
 - validação estrutural de RGs de outros formatos, sem confirmar dígitos verificadores;
 - validação, normalização, formatação e parsing de telefones fixos e celulares brasileiros;
@@ -152,6 +157,44 @@ console.log(address.provider); // brasilapi ou viacep
 
 O algoritmo alfanumérico converte cada caractere pelo valor ASCII menos 48 e aplica módulo 11 com os pesos oficiais. Os dois últimos caracteres permanecem numéricos.
 
+### PIS/PASEP/NIT
+
+- `validatePIS(value: unknown): boolean`
+- `normalizePIS(value: string | number): string`
+- `formatPIS(value: string | number): string`
+- `generatePIS(options?: { formatted?: boolean }): string`
+
+A validação é estrutural e algorítmica, mas não confirma vínculo trabalhista nem existência oficial do registro.
+
+### CNH
+
+- `validateCNH(value: unknown): boolean`
+- `normalizeCNH(value: string | number): string`
+- `formatCNH(value: string | number): string`
+- `generateCNH(options?: { formatted?: boolean }): string`
+
+A validação verifica os dígitos da CNH e não confirma habilitação, categoria, situação ou validade do documento.
+
+### Placa veicular
+
+- `validateLicensePlate(value: unknown): boolean`
+- `normalizeLicensePlate(value: string): string`
+- `formatLicensePlate(value: string): string`
+- `parseLicensePlate(value: string): ParsedLicensePlate`
+
+São aceitos os formatos antigo (`ABC-1234`) e Mercosul (`ABC1D23`). A validação não confirma registro ou situação do veículo.
+
+### Valores em reais
+
+- `formatBRL(value: number): string`
+- `parseBRL(value: string): number`
+- `normalizeBRL(value: string | number): number`
+
+```ts
+formatBRL(1234.56); // R$ 1.234,56
+parseBRL('R$ 1.234,56'); // 1234.56
+```
+
 ### RG
 
 - `SUPPORTED_RG_STATES: readonly RGState[]`
@@ -172,6 +215,21 @@ As funções `normalizeCPF`, `normalizeCNPJ` e `normalizeRG` validam a estrutura
 `validateRG` faz uma verificação estrutural conservadora quando a UF é omitida. Quando `state` é informada, exige um algoritmo estadual suportado; atualmente, somente `SP`. Para validar apenas a estrutura de um RG de outro estado, omita `state`.
 
 Entradas numéricas são aceitas somente quando são inteiros seguros e não negativos. Prefira `string`, especialmente para documentos que possam começar com zero; números negativos e decimais são rejeitados em vez de terem sinal ou separador removidos silenciosamente.
+
+### Estados e regiões brasileiras
+
+- `BRAZILIAN_STATES: readonly BrazilianState[]`
+- `BRAZILIAN_REGIONS: readonly BrazilianRegion[]`
+- `getBrazilianState(value: unknown): BrazilianState | undefined`
+- `isBrazilianState(value: unknown): boolean`
+- `getBrazilianStatesByRegion(region: string): readonly BrazilianState[]`
+
+```ts
+getBrazilianState('sp'); // { code: 'SP', name: 'São Paulo', ... }
+getBrazilianStatesByRegion('Sul'); // PR, RS, SC
+```
+
+Os dados de UF, capital, região e código IBGE são estáticos no pacote e não substituem uma fonte oficial atualizada.
 
 ### Telefone brasileiro
 

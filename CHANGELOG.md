@@ -10,6 +10,8 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 
 - Normalização canônica de CPF, CNPJ, RG e CEP.
 - Validação, normalização, formatação e parsing de telefones fixos e celulares brasileiros.
+- Validação, geração e formatação de PIS/PASEP/NIT, CNH e placas veiculares antigas/Mercosul.
+- Formatação e parsing de valores em reais e catálogo estático de estados/regiões brasileiras.
 - Lista imutável dos 67 DDDs geográficos brasileiros.
 - Cache de CEP injetável, resposta original opcional e consulta em lote com concorrência limitada.
 - A cobertura passou a usar `c8` com filtro do build ESM, compatível com Node 20, 22 e 26.

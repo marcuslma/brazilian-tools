@@ -45,6 +45,31 @@
       "types": "./dist/types/cep.d.ts",
       "import": "./dist/esm/cep.js",
       "require": "./dist/cjs/cep.js"
+    },
+    "./cnh": {
+      "types": "./dist/types/cnh.d.ts",
+      "import": "./dist/esm/cnh.js",
+      "require": "./dist/cjs/cnh.js"
+    },
+    "./currency": {
+      "types": "./dist/types/currency.d.ts",
+      "import": "./dist/esm/currency.js",
+      "require": "./dist/cjs/currency.js"
+    },
+    "./license-plate": {
+      "types": "./dist/types/license-plate.d.ts",
+      "import": "./dist/esm/license-plate.js",
+      "require": "./dist/cjs/license-plate.js"
+    },
+    "./pis": {
+      "types": "./dist/types/pis.d.ts",
+      "import": "./dist/esm/pis.js",
+      "require": "./dist/cjs/pis.js"
+    },
+    "./states": {
+      "types": "./dist/types/states.d.ts",
+      "import": "./dist/esm/states.js",
+      "require": "./dist/cjs/states.js"
     }
   },
   "files": [

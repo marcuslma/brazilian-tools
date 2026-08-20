@@ -35,17 +35,23 @@ try {
     `
 import {
   CEPNotFoundError,
+  formatBRL,
   formatCPF,
   formatPhoneBR,
   generateCNPJ,
   normalizeCNPJ,
   parsePhoneBR,
+  validateCNH,
   validateCPF,
+  validatePIS,
   type CEPAddress,
   type CEPCache,
 } from 'brazilian-tools';
 
 const valid: boolean = validateCPF('52998224725');
+const cnhValid: boolean = validateCNH('12345678900');
+const pisValid: boolean = validatePIS('12044568901');
+const brl: string = formatBRL(1234.56);
 const formatted: string = formatCPF('52998224725');
 const generated: string = generateCNPJ({ kind: 'alphanumeric' });
 const normalized: string = normalizeCNPJ('04.252.011/0001-10');
@@ -54,7 +60,7 @@ const e164: string = parsePhoneBR(phone).e164;
 const address: CEPAddress | undefined = undefined;
 const cache: CEPCache = new Map<string, CEPAddress>();
 const error: Error = new CEPNotFoundError('01001000');
-void [valid, formatted, generated, normalized, phone, e164, address, cache, error];
+void [valid, cnhValid, pisValid, brl, formatted, generated, normalized, phone, e164, address, cache, error];
 `,
   );
   writeFileSync(
@@ -96,8 +102,18 @@ import {
   validateRG,
 } from 'brazilian-tools';
 import { validateCPF as validateCPFDirect } from 'brazilian-tools/cpf';
+import { validateCNH } from 'brazilian-tools/cnh';
+import { formatBRL } from 'brazilian-tools/currency';
+import { validateLicensePlate } from 'brazilian-tools/license-plate';
+import { validatePIS } from 'brazilian-tools/pis';
+import { getBrazilianState } from 'brazilian-tools/states';
 assert.equal(validateCPF('52998224725'), true);
 assert.equal(validateCPFDirect('52998224725'), true);
+assert.equal(validateCNH('12345678900'), true);
+assert.equal(formatBRL(1234.56), 'R$ 1.234,56');
+assert.equal(validateLicensePlate('ABC1D23'), true);
+assert.equal(validatePIS('12044568901'), true);
+assert.equal(getBrazilianState('SP')?.name, 'São Paulo');
 assert.equal(formatCPF('52998224725'), '529.982.247-25');
 assert.equal(normalizeCPF('529.982.247-25'), '52998224725');
 assert.equal(validateCNPJ('04252011000110'), true);
@@ -113,10 +129,15 @@ assert.equal(normalizeCEP('01001-000'), '01001000');
     join(temporaryDirectory, 'consumer.cjs'),
     `
 const assert = require('node:assert/strict');
-const { formatCPF, validateCPF, validateRG } = require('brazilian-tools');
+const { formatCPF, validateCPF, validateRG, validateCNH, formatBRL, validateLicensePlate } = require('brazilian-tools');
 const { validateCPF: validateCPFDirect } = require('brazilian-tools/cpf');
+const { validatePIS } = require('brazilian-tools/pis');
 assert.equal(validateCPF('52998224725'), true);
 assert.equal(validateCPFDirect('52998224725'), true);
+assert.equal(validateCNH('12345678900'), true);
+assert.equal(formatBRL(1234.56), 'R$ 1.234,56');
+assert.equal(validateLicensePlate('ABC1D23'), true);
+assert.equal(validatePIS('12044568901'), true);
 assert.equal(formatCPF('52998224725'), '529.982.247-25');
 assert.equal(validateRG('123456782'), true);
 `,
