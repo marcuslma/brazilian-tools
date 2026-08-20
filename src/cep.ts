@@ -79,6 +79,7 @@ interface CEPErrorOptions {
   cause?: unknown;
   provider?: CEPResolvedProvider;
   status?: number;
+  timedOut?: boolean;
 }
 
 export class CEPNotFoundError extends Error {
@@ -95,9 +96,11 @@ export class CEPRequestError extends Error {
   override readonly name = 'CEPRequestError';
   readonly provider?: CEPResolvedProvider;
   readonly status?: number;
+  readonly timedOut: boolean;
 
   constructor(message: string, options: CEPErrorOptions = {}) {
     super(message, options.cause === undefined ? undefined : { cause: options.cause });
+    this.timedOut = options.timedOut ?? false;
     if (options.provider !== undefined) this.provider = options.provider;
     if (options.status !== undefined) this.status = options.status;
   }
@@ -261,10 +264,11 @@ async function requestCEP(
   const abort = (): void => controller.abort(options.signal?.reason);
   if (options.signal?.aborted) abort();
   else options.signal?.addEventListener('abort', abort, { once: true });
-  const timeout = setTimeout(
-    () => controller.abort(new Error('Tempo limite da consulta de CEP excedido.')),
-    options.timeoutMs ?? 5_000,
-  );
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort(new Error('Tempo limite da consulta de CEP excedido.'));
+  }, options.timeoutMs ?? 5_000);
 
   try {
     const response = await awaitWithAbort(
@@ -302,6 +306,13 @@ async function requestCEP(
     if (options.includeRaw) address.raw = data;
     return address;
   } catch (error) {
+    if (timedOut) {
+      throw new CEPRequestError('Tempo limite da consulta de CEP excedido.', {
+        cause: error,
+        provider,
+        timedOut: true,
+      });
+    }
     if (error instanceof CEPNotFoundError || error instanceof CEPRequestError) throw error;
     throw new CEPRequestError('Não foi possível consultar o CEP.', { cause: error, provider });
   } finally {
@@ -360,6 +371,7 @@ export async function lookupCEP(
     address = await requestCEP(cep, 'brasilapi', { ...options, timeoutMs });
   } catch (error) {
     if (!(error instanceof CEPNotFoundError) && !(error instanceof CEPRequestError)) throw error;
+    if (error instanceof CEPRequestError && error.timedOut) throw error;
     if (options.signal?.aborted) throw error;
     if (error instanceof CEPNotFoundError && options.fallbackOnNotFound === false) throw error;
     if (
