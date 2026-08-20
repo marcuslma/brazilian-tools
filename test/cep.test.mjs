@@ -8,7 +8,7 @@ import {
   lookupCEPs,
   normalizeCEP,
   validateCEP,
-} from '../dist/index.js';
+} from '../dist/esm/index.js';
 
 test('rejeita provedor inválido antes de consultar a rede', async () => {
   await assert.rejects(lookupCEP('01001000', { provider: 'inexistente' }), RangeError);

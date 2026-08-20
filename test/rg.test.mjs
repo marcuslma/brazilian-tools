@@ -6,7 +6,7 @@ import {
   generateRG,
   normalizeRG,
   validateRG,
-} from '../dist/index.js';
+} from '../dist/esm/index.js';
 
 test('valida a estrutura plausível de RGs sem exigir dígito verificador', () => {
   assert.equal(validateRG('12.345.678-9'), true);

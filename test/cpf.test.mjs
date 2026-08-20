@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { formatCPF, generateCPF, normalizeCPF, validateCPF } from '../dist/index.js';
+import { formatCPF, generateCPF, normalizeCPF, validateCPF } from '../dist/esm/index.js';
 
 test('valida CPF com ou sem máscara', () => {
   assert.equal(validateCPF('529.982.247-25'), true);

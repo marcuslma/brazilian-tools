@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { inputString, onlyDigits, randomInteger } from '../dist/internal.js';
+import { inputString, onlyDigits, randomInteger } from '../dist/esm/internal.js';
 
 test('funções internas rejeitam entradas inválidas', () => {
   assert.equal(inputString(null), null);

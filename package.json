@@ -12,12 +12,39 @@
     "url": "https://github.com/marcuslma/brazilian-tools/issues"
   },
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./cpf": {
+      "types": "./dist/types/cpf.d.ts",
+      "import": "./dist/esm/cpf.js",
+      "require": "./dist/cjs/cpf.js"
+    },
+    "./cnpj": {
+      "types": "./dist/types/cnpj.d.ts",
+      "import": "./dist/esm/cnpj.js",
+      "require": "./dist/cjs/cnpj.js"
+    },
+    "./rg": {
+      "types": "./dist/types/rg.d.ts",
+      "import": "./dist/esm/rg.js",
+      "require": "./dist/cjs/rg.js"
+    },
+    "./phone": {
+      "types": "./dist/types/phone.d.ts",
+      "import": "./dist/esm/phone.js",
+      "require": "./dist/cjs/phone.js"
+    },
+    "./cep": {
+      "types": "./dist/types/cep.d.ts",
+      "import": "./dist/esm/cep.js",
+      "require": "./dist/cjs/cep.js"
     }
   },
   "files": [
@@ -33,7 +60,10 @@
   },
   "scripts": {
     "clean": "node scripts/clean.mjs",
-    "build": "npm run clean && tsc -p tsconfig.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "node scripts/build-cjs.mjs",
+    "build:types": "tsc -p tsconfig.types.json",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run build:types",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs",
     "test:coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=95 test/*.test.mjs",
@@ -63,6 +93,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "esbuild": "^0.28.2",
     "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.11.0",

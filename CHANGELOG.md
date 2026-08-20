@@ -12,6 +12,8 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Validação, normalização, formatação e parsing de telefones fixos e celulares brasileiros.
 - Lista imutável dos 67 DDDs geográficos brasileiros.
 - Cache de CEP injetável, resposta original opcional e consulta em lote com concorrência limitada.
+- Builds ESM e CommonJS com exports condicionais para `import` e `require`.
+- Subpath exports para `cpf`, `cnpj`, `rg`, `phone` e `cep`.
 - Validação estrutural conservadora de RGs sem algoritmo estadual implementado.
 - Política configurável de fallback para CEP não encontrado.
 

@@ -11,7 +11,7 @@ import {
   validateCPF,
   validatePhoneBR,
   validateRG,
-} from '../dist/index.js';
+} from '../dist/esm/index.js';
 
 const cases = [
   {

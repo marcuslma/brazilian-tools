@@ -95,7 +95,9 @@ import {
   validatePhoneBR,
   validateRG,
 } from 'brazilian-tools';
+import { validateCPF as validateCPFDirect } from 'brazilian-tools/cpf';
 assert.equal(validateCPF('52998224725'), true);
+assert.equal(validateCPFDirect('52998224725'), true);
 assert.equal(formatCPF('52998224725'), '529.982.247-25');
 assert.equal(normalizeCPF('529.982.247-25'), '52998224725');
 assert.equal(validateCNPJ('04252011000110'), true);
@@ -106,7 +108,23 @@ assert.equal(normalizeCEP('01001-000'), '01001000');
 `,
   );
   run(process.execPath, [join(temporaryDirectory, 'consumer.mjs')], temporaryDirectory);
-  process.stdout.write('Tarball instalado: import ESM, runtime e tipos TypeScript OK.\n');
+
+  writeFileSync(
+    join(temporaryDirectory, 'consumer.cjs'),
+    `
+const assert = require('node:assert/strict');
+const { formatCPF, validateCPF, validateRG } = require('brazilian-tools');
+const { validateCPF: validateCPFDirect } = require('brazilian-tools/cpf');
+assert.equal(validateCPF('52998224725'), true);
+assert.equal(validateCPFDirect('52998224725'), true);
+assert.equal(formatCPF('52998224725'), '529.982.247-25');
+assert.equal(validateRG('123456782'), true);
+`,
+  );
+  run(process.execPath, [join(temporaryDirectory, 'consumer.cjs')], temporaryDirectory);
+  process.stdout.write(
+    'Tarball instalado: import ESM, require CJS, runtime e tipos TypeScript OK.\n',
+  );
 } finally {
   rmSync(temporaryDirectory, { recursive: true, force: true });
 }

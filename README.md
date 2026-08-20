@@ -1,6 +1,6 @@
 # brazilian-tools
 
-Utilitários brasileiros em TypeScript 7, ESM e **sem dependências de produção**.
+Utilitários brasileiros em TypeScript 7, ESM/CJS e **sem dependências de produção**.
 
 ## Recursos
 
@@ -18,14 +18,26 @@ Utilitários brasileiros em TypeScript 7, ESM e **sem dependências de produçã
 ## Requisitos
 
 - Node.js 20 ou superior;
-- projeto consumidor ESM ou bundler compatível.
+- projeto consumidor ESM, CommonJS ou bundler compatível.
 
-O pacote é **ESM-only**: use `import`/`import()`; a condição CommonJS `require('brazilian-tools')` não é publicada.
+O pacote publica os formatos ESM e CommonJS. Use `import` em projetos ESM/bundlers ou `require()` em projetos CommonJS, como configurações padrão do NestJS.
 
 ## Instalação
 
 ```bash
 npm install brazilian-tools
+```
+
+ESM:
+
+```ts
+import { validateCPF } from 'brazilian-tools';
+```
+
+CommonJS:
+
+```js
+const { validateCPF } = require('brazilian-tools');
 ```
 
 ## Uso
@@ -201,7 +213,7 @@ npm run check
 npm run smoke:package
 ```
 
-`npm run smoke:package` gera o tarball, instala o pacote em um consumidor temporário e verifica o import ESM, o runtime e as declarações TypeScript.
+`npm run smoke:package` gera o tarball, instala o pacote em um consumidor temporário e verifica import ESM, `require` CommonJS, runtime e declarações TypeScript.
 
 `npm run test:coverage` executa a suíte com a cobertura nativa do Node e exige 100% de linhas, 100% de funções e 95% de branches; a saída também reporta a métrica de branches, que atualmente fica abaixo de 100% por combinações defensivas e de curto-circuito.
 

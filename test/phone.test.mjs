@@ -6,7 +6,7 @@ import {
   normalizePhoneBR,
   parsePhoneBR,
   validatePhoneBR,
-} from '../dist/index.js';
+} from '../dist/esm/index.js';
 
 test('valida celulares e telefones fixos brasileiros com DDD', () => {
   assert.equal(validatePhoneBR('(11) 98765-4321'), true);

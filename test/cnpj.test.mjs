@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { formatCNPJ, generateCNPJ, normalizeCNPJ, validateCNPJ } from '../dist/index.js';
+import { formatCNPJ, generateCNPJ, normalizeCNPJ, validateCNPJ } from '../dist/esm/index.js';
 
 test('valida CNPJ numérico tradicional', () => {
   assert.equal(validateCNPJ('04.252.011/0001-10'), true);
