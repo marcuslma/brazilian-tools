@@ -215,7 +215,7 @@ npm run smoke:package
 
 `npm run smoke:package` gera o tarball, instala o pacote em um consumidor temporário e verifica import ESM, `require` CommonJS, runtime e declarações TypeScript.
 
-`npm run test:coverage` executa a suíte com a cobertura nativa do Node e exige 100% de linhas, 100% de funções e 95% de branches; a saída também reporta a métrica de branches, que atualmente fica abaixo de 100% por combinações defensivas e de curto-circuito.
+`npm run test:coverage` executa a suíte com o `c8`, cobrindo somente o build ESM e exigindo 100% de linhas, 100% de funções e 95% de branches; isso mantém o quality gate consistente entre as versões de Node suportadas.
 
 ## Licença
 

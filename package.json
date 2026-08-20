@@ -66,7 +66,7 @@
     "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run build:types",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs",
-    "test:coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=95 test/*.test.mjs",
+    "test:coverage": "npm run build && c8 --check-coverage --lines 100 --functions 100 --branches 95 --include 'dist/esm/**/*.js' node --test test/*.test.mjs",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{json,md,mjs,ts,yml}\"",
     "format:check": "prettier --check \"**/*.{json,md,mjs,ts,yml}\"",
@@ -93,6 +93,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "c8": "^12.0.0",
     "esbuild": "^0.28.2",
     "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
