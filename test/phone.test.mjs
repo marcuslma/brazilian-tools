@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   SUPPORTED_PHONE_DDDS,
   formatPhoneBR,
+  generatePhoneBR,
   normalizePhoneBR,
   parsePhoneBR,
   validatePhoneBR,
@@ -58,6 +59,25 @@ test('decompõe telefone brasileiro e expõe sua representação E.164', () => {
   assert.throws(() => parsePhoneBR('abc'), TypeError);
 });
 
+test('gera celulares e telefones fixos válidos com opções de DDD e formato', () => {
+  const mobile = generatePhoneBR({ ddd: '11', type: 'mobile', formatted: true });
+  assert.match(mobile, /^\(11\) 9\d{4}-\d{4}$/);
+  assert.equal(validatePhoneBR(mobile), true);
+
+  const landline = generatePhoneBR({
+    ddd: '21',
+    type: 'landline',
+    formatted: true,
+    international: true,
+  });
+  assert.match(landline, /^\+55 21 [2-5]\d{3}-\d{4}$/);
+  assert.equal(validatePhoneBR(landline), true);
+
+  const normalized = generatePhoneBR({ ddd: '31', type: 'mobile' });
+  assert.match(normalized, /^31\d{9}$/);
+  assert.equal(validatePhoneBR(normalized), true);
+  assert.throws(() => generatePhoneBR({ ddd: '20' }), RangeError);
+});
 test('expõe os 67 DDDs geográficos oficiais sem permitir mutação', () => {
   assert.equal(SUPPORTED_PHONE_DDDS.length, 67);
   assert.equal(SUPPORTED_PHONE_DDDS.includes('11'), true);

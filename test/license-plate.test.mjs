@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   formatLicensePlate,
+  generateLicensePlate,
   normalizeLicensePlate,
   parseLicensePlate,
   validateLicensePlate,
@@ -17,6 +18,18 @@ test('valida placas antigas e Mercosul', () => {
   assert.equal(validateLicensePlate(null), false);
 });
 
+test('gera placas antigas e Mercosul válidas com formatação opcional', () => {
+  const oldPlate = generateLicensePlate({ kind: 'old', formatted: true });
+  assert.match(oldPlate, /^[A-Z]{3}-\d{4}$/);
+  assert.equal(validateLicensePlate(oldPlate), true);
+
+  const mercosul = generateLicensePlate({ kind: 'mercosul', formatted: true });
+  assert.match(mercosul, /^[A-Z]{3}\d[A-Z]\d{2}$/);
+  assert.equal(validateLicensePlate(mercosul), true);
+
+  const normalized = generateLicensePlate({ kind: 'old' });
+  assert.match(normalized, /^[A-Z]{3}\d{4}$/);
+});
 test('normaliza, formata e identifica placas', () => {
   assert.equal(normalizeLicensePlate('abc-1234'), 'ABC1234');
   assert.equal(normalizeLicensePlate('abc1d23'), 'ABC1D23');

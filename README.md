@@ -11,12 +11,12 @@ Utilitários brasileiros em TypeScript 7, ESM/CJS e **sem dependências de produ
 - suporte ao novo CNPJ alfanumérico (12 posições alfanuméricas + 2 verificadores numéricos);
 - validação, geração e formatação de PIS/PASEP/NIT;
 - validação, geração e formatação de CNH;
-- validação, normalização, formatação e parsing de placas antigas e Mercosul;
+- validação, normalização, formatação e parsing de placas antigas e Mercosul, com geração sintética por tipo;
 - formatação e parsing de valores em reais;
 - catálogo estático de estados, regiões, capitais e códigos IBGE;
 - validação algorítmica de RG de São Paulo;
 - validação estrutural de RGs de outros formatos, sem confirmar dígitos verificadores;
-- validação, normalização, formatação e parsing de telefones fixos e celulares brasileiros;
+- validação, normalização, formatação e parsing de telefones fixos e celulares brasileiros, com geração sintética por DDD e tipo;
 - validação, normalização e formatação estrutural de CEP;
 - consulta de endereço pela BrasilAPI e pelo ViaCEP usando a `fetch` nativa;
 - modo automático: BrasilAPI como fonte principal e ViaCEP como fallback;
@@ -158,8 +158,9 @@ A validação verifica os dígitos da CNH e não confirma habilitação, categor
 - `normalizeLicensePlate(value: string): string`
 - `formatLicensePlate(value: string): string`
 - `parseLicensePlate(value: string): ParsedLicensePlate`
+- `generateLicensePlate(options?: { kind?: 'old' | 'mercosul'; formatted?: boolean }): string`
 
-São aceitos os formatos antigo (`ABC-1234`) e Mercosul (`ABC1D23`). A validação não confirma registro ou situação do veículo.
+São aceitos os formatos antigo (`ABC-1234`) e Mercosul (`ABC1D23`). A geração cria identificadores sinteticamente válidos, mas não confirma registro ou situação do veículo.
 
 ### Valores em reais
 
@@ -215,11 +216,13 @@ Os dados de UF, capital, região e código IBGE são estáticos no pacote e não
 - `normalizePhoneBR(value: string | number): string`
 - `formatPhoneBR(value, options?: { international?: boolean }): string`
 - `parsePhoneBR(value): ParsedPhoneBR`
+- `generatePhoneBR(options?: { ddd?: PhoneBRDDD; type?: 'mobile' | 'landline'; formatted?: boolean; international?: boolean }): string`
 
 ```ts
 normalizePhoneBR('+55 (11) 98765-4321'); // 11987654321
 formatPhoneBR('2123456789'); // (21) 2345-6789
 formatPhoneBR('11987654321', { international: true }); // +55 11 98765-4321
+const generatedPhone = generatePhoneBR({ ddd: '11', type: 'mobile', formatted: true });
 
 parsePhoneBR('(11) 98765-4321');
 // {

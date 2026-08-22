@@ -1,4 +1,4 @@
-import { inputString } from './internal.js';
+import { inputString, randomFrom, randomInteger } from './internal.js';
 
 /** Códigos de área geográficos em uso no Plano de Numeração Brasileiro. */
 export const SUPPORTED_PHONE_DDDS = Object.freeze([
@@ -74,6 +74,13 @@ export const SUPPORTED_PHONE_DDDS = Object.freeze([
 export type PhoneBRDDD = (typeof SUPPORTED_PHONE_DDDS)[number];
 export type PhoneBRType = 'mobile' | 'landline';
 
+export interface GeneratePhoneBROptions {
+  ddd?: PhoneBRDDD;
+  type?: PhoneBRType;
+  formatted?: boolean;
+  international?: boolean;
+}
+
 export interface FormatPhoneBROptions {
   international?: boolean;
 }
@@ -127,6 +134,22 @@ function normalizeDigits(digits: string): NormalizedPhoneBR | null {
     return { national: digits, ddd: ddd as PhoneBRDDD, number, type: 'landline' };
   }
   return null;
+}
+
+export function generatePhoneBR(options: GeneratePhoneBROptions = {}): string {
+  const ddd = options.ddd ?? SUPPORTED_PHONE_DDDS[randomInteger(SUPPORTED_PHONE_DDDS.length)]!;
+  if (!(SUPPORTED_PHONE_DDDS as readonly string[]).includes(ddd)) {
+    throw new RangeError('DDD deve pertencer à lista de códigos suportados.');
+  }
+  const type = options.type ?? (randomInteger(2) === 0 ? 'mobile' : 'landline');
+  const number =
+    type === 'mobile'
+      ? `9${randomFrom('0123456789', 8)}`
+      : `${randomFrom('2345', 1)}${randomFrom('0123456789', 7)}`;
+  const national = `${ddd}${number}`;
+  return options.formatted
+    ? formatPhoneBR(national, options.international ? { international: true } : {})
+    : national;
 }
 
 export function validatePhoneBR(value: unknown): boolean {

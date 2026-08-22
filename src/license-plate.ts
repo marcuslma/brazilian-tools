@@ -1,6 +1,11 @@
-import { inputString } from './internal.js';
+import { inputString, randomFrom } from './internal.js';
 
 export type LicensePlateKind = 'old' | 'mercosul';
+
+export interface GenerateLicensePlateOptions {
+  kind?: LicensePlateKind;
+  formatted?: boolean;
+}
 
 export interface ParsedLicensePlate {
   value: string;
@@ -20,6 +25,16 @@ function normalizeInput(value: unknown): string | null {
 
 function kindOf(value: string): LicensePlateKind {
   return /^[A-Z]{3}\d{4}$/.test(value) ? 'old' : 'mercosul';
+}
+
+export function generateLicensePlate(options: GenerateLicensePlateOptions = {}): string {
+  const kind = options.kind ?? 'mercosul';
+  const letters = randomFrom('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 3);
+  const plate =
+    kind === 'old'
+      ? `${letters}${randomFrom('0123456789', 4)}`
+      : `${letters}${randomFrom('0123456789', 1)}${randomFrom('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 1)}${randomFrom('0123456789', 2)}`;
+  return options.formatted ? formatLicensePlate(plate) : plate;
 }
 
 export function normalizeLicensePlate(value: string): string {
