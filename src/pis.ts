@@ -1,4 +1,4 @@
-import { inputString, randomFrom } from './internal.js';
+import { booleanOption, inputString, randomFrom } from './internal.js';
 
 export interface GeneratePISOptions {
   formatted?: boolean;
@@ -15,7 +15,7 @@ function normalizeInput(value: unknown): string | null {
 
 export function normalizePIS(value: string | number): string {
   const pis = normalizeInput(value);
-  if (!pis) throw new TypeError('PIS/PASEP/NIT deve conter 11 dígitos.');
+  if (!pis) throw new TypeError('PIS/PASEP/NIT must contain 11 digits.');
   return pis;
 }
 
@@ -40,9 +40,10 @@ export function formatPIS(value: string | number): string {
 }
 
 export function generatePIS(options: GeneratePISOptions = {}): string {
+  const formatted = booleanOption(options.formatted, 'formatted');
   let base: string;
   do base = randomFrom('0123456789', 10);
   while (/^(\d)\1{9}$/.test(base));
   const pis = `${base}${checkDigit(base)}`;
-  return options.formatted ? formatPIS(pis) : pis;
+  return formatted ? formatPIS(pis) : pis;
 }

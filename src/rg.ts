@@ -1,11 +1,11 @@
-import { inputString, randomFrom, randomInteger } from './internal.js';
+import { booleanOption, inputString, randomFrom, randomInteger } from './internal.js';
 
-/** UFs cujo algoritmo de dígito verificador está implementado e testado. */
+/** States whose check-digit algorithm is implemented and tested. */
 export const SUPPORTED_RG_STATES = Object.freeze(['SP'] as const);
 export type RGState = (typeof SUPPORTED_RG_STATES)[number];
 
 export interface RGOptions {
-  /** Se omitida na geração, uma UF suportada é sorteada. */
+  /** A supported state is selected randomly when omitted during generation. */
   state?: RGState;
 }
 
@@ -55,13 +55,13 @@ function structuralInput(value: unknown): string | null {
 function ensureSupportedState(state: string): asserts state is RGState {
   if (!(SUPPORTED_RG_STATES as readonly string[]).includes(state)) {
     throw new RangeError(
-      `UF não suportada: ${state}. UFs com algoritmo verificável: ${SUPPORTED_RG_STATES.join(', ')}.`,
+      `Unsupported state: ${state}. States with a verifiable algorithm: ${SUPPORTED_RG_STATES.join(', ')}.`,
     );
   }
 }
 
 function selectState(state?: string): RGState {
-  if (state !== undefined) {
+  if (state !== undefined && state !== null) {
     ensureSupportedState(state);
     return state;
   }
@@ -69,7 +69,7 @@ function selectState(state?: string): RGState {
 }
 
 function stateForNormalization(state?: string): RGState {
-  if (state !== undefined) {
+  if (state !== undefined && state !== null) {
     ensureSupportedState(state);
     return state;
   }
@@ -80,7 +80,7 @@ export function normalizeRG(value: string | number, options: RGOptions = {}): st
   const state = stateForNormalization(options.state);
   const rg = normalizeInput(value);
   if (state === 'SP' && (!rg || !/^\d{8}[\dX]$/.test(rg))) {
-    throw new TypeError('RG de SP deve conter 8 dígitos e um verificador numérico ou X.');
+    throw new TypeError('São Paulo RG must contain 8 digits and a numeric or X check digit.');
   }
   return rg!;
 }
@@ -101,8 +101,8 @@ function validateSP(value: unknown): boolean {
 }
 
 /**
- * Valida um RG. Sem UF, verifica uma estrutura plausível.
- * Com uma UF informada, exige um algoritmo estadual suportado.
+ * Validates an RG. Without a state, checks a plausible structure.
+ * With a state, requires a supported state algorithm.
  */
 export function validateRG(value: unknown, options: { state?: string } = {}): boolean {
   if (options.state !== undefined) {
@@ -128,7 +128,7 @@ function generateSP(formatted: boolean): string {
 function generateRGResult(options: GenerateRGOptions = {}): GeneratedRG {
   const state = selectState(options.state);
   return {
-    value: generateSP(options.formatted ?? false),
+    value: generateSP(booleanOption(options.formatted, 'formatted')),
     state,
   };
 }
@@ -136,6 +136,10 @@ function generateRGResult(options: GenerateRGOptions = {}): GeneratedRG {
 export function generateRG(options: GenerateRGOptions & { includeState: true }): GeneratedRG;
 export function generateRG(options?: GenerateRGOptions & { includeState?: false }): string;
 export function generateRG(options: GenerateRGOptions = {}): string | GeneratedRG {
+  const includeState = options.includeState ?? false;
+  if (includeState !== true && includeState !== false) {
+    throw new RangeError(`includeState must be boolean: ${String(includeState)}.`);
+  }
   const generated = generateRGResult(options);
-  return options.includeState ? generated : generated.value;
+  return includeState ? generated : generated.value;
 }

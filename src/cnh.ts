@@ -1,4 +1,4 @@
-import { inputString, randomFrom } from './internal.js';
+import { booleanOption, inputString, randomFrom } from './internal.js';
 
 export interface GenerateCNHOptions {
   formatted?: boolean;
@@ -15,7 +15,7 @@ function normalizeInput(value: unknown): string | null {
 
 export function normalizeCNH(value: string | number): string {
   const cnh = normalizeInput(value);
-  if (!cnh) throw new TypeError('CNH deve conter 11 dígitos.');
+  if (!cnh) throw new TypeError('CNH must contain 11 digits.');
   return cnh;
 }
 
@@ -52,11 +52,12 @@ export function formatCNH(value: string | number): string {
 }
 
 export function generateCNH(options: GenerateCNHOptions = {}): string {
+  const formatted = booleanOption(options.formatted, 'formatted');
   let base: string;
   let cnh: string;
   do {
     base = randomFrom('0123456789', 9);
     cnh = appendCheckDigits(base);
   } while (/^(\d)\1{8}$/.test(base) || cnh.includes('-'));
-  return options.formatted ? formatCNH(cnh) : cnh;
+  return formatted ? formatCNH(cnh) : cnh;
 }

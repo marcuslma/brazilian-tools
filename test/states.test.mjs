@@ -8,7 +8,7 @@ import {
   isBrazilianState,
 } from '../dist/esm/states.js';
 
-test('expõe os 27 estados brasileiros e regiões', () => {
+test('exposes the 27 Brazilian states and regions', () => {
   assert.equal(BRAZILIAN_STATES.length, 27);
   assert.equal(Object.isFrozen(BRAZILIAN_STATES), true);
   assert.deepEqual(BRAZILIAN_REGIONS, ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul']);
@@ -19,7 +19,7 @@ test('expõe os 27 estados brasileiros e regiões', () => {
   assert.equal(isBrazilianState('XX'), false);
 });
 
-test('filtra estados por região', () => {
+test('filters states by region', () => {
   assert.equal(getBrazilianStatesByRegion('Sudeste').length, 4);
   assert.deepEqual(
     getBrazilianStatesByRegion('Sul').map((state) => state.code),

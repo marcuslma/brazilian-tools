@@ -8,7 +8,7 @@ import {
   validateLicensePlate,
 } from '../dist/esm/license-plate.js';
 
-test('valida placas antigas e Mercosul', () => {
+test('validates old and Mercosur plates', () => {
   assert.equal(validateLicensePlate('ABC-1234'), true);
   assert.equal(validateLicensePlate('ABC1234'), true);
   assert.equal(validateLicensePlate('ABC1D23'), true);
@@ -18,7 +18,7 @@ test('valida placas antigas e Mercosul', () => {
   assert.equal(validateLicensePlate(null), false);
 });
 
-test('gera placas antigas e Mercosul válidas com formatação opcional', () => {
+test('generates valid old and Mercosur plates with optional formatting', () => {
   const oldPlate = generateLicensePlate({ kind: 'old', formatted: true });
   assert.match(oldPlate, /^[A-Z]{3}-\d{4}$/);
   assert.equal(validateLicensePlate(oldPlate), true);
@@ -30,7 +30,7 @@ test('gera placas antigas e Mercosul válidas com formatação opcional', () => 
   const normalized = generateLicensePlate({ kind: 'old' });
   assert.match(normalized, /^[A-Z]{3}\d{4}$/);
 });
-test('normaliza, formata e identifica placas', () => {
+test('normalizes, formats, and identifies plates', () => {
   assert.equal(normalizeLicensePlate('abc-1234'), 'ABC1234');
   assert.equal(normalizeLicensePlate('abc1d23'), 'ABC1D23');
   assert.equal(formatLicensePlate('ABC1234'), 'ABC-1234');
@@ -46,4 +46,9 @@ test('normaliza, formata e identifica placas', () => {
     formatted: 'ABC1D23',
   });
   assert.throws(() => normalizeLicensePlate('ABC-123'), TypeError);
+});
+
+test('rejects an unknown license plate kind at runtime', () => {
+  assert.throws(() => generateLicensePlate({ kind: 'typo' }), RangeError);
+  assert.throws(() => generateLicensePlate({ formatted: 'false' }), RangeError);
 });

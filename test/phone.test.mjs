@@ -9,14 +9,14 @@ import {
   validatePhoneBR,
 } from '../dist/esm/index.js';
 
-test('valida celulares e telefones fixos brasileiros com DDD', () => {
+test('validates Brazilian mobile and landline numbers with DDD', () => {
   assert.equal(validatePhoneBR('(11) 98765-4321'), true);
   assert.equal(validatePhoneBR('+55 (11) 98765-4321'), true);
   assert.equal(validatePhoneBR('(21) 2345-6789'), true);
   assert.equal(validatePhoneBR('552123456789'), true);
 });
 
-test('rejeita DDD, país, prefixo ou tamanho incompatível com o plano nacional', () => {
+test('rejects incompatible DDD, country code, prefix, or length', () => {
   for (const value of [
     '(20) 98765-4321',
     '+1 11 98765-4321',
@@ -31,21 +31,21 @@ test('rejeita DDD, país, prefixo ou tamanho incompatível com o plano nacional'
   }
 });
 
-test('normaliza telefone nacional ou internacional para DDD e número', () => {
+test('normalizes national or international phone numbers to DDD and number', () => {
   assert.equal(normalizePhoneBR('(11) 98765-4321'), '11987654321');
   assert.equal(normalizePhoneBR('+55 21 2345-6789'), '2123456789');
   assert.equal(normalizePhoneBR('552123456789'), '2123456789');
   assert.throws(() => normalizePhoneBR('(20) 98765-4321'), TypeError);
 });
 
-test('formata celular ou fixo em formato nacional e internacional', () => {
+test('formats mobile or landline numbers nationally and internationally', () => {
   assert.equal(formatPhoneBR('11987654321'), '(11) 98765-4321');
   assert.equal(formatPhoneBR('2123456789'), '(21) 2345-6789');
   assert.equal(formatPhoneBR('11987654321', { international: true }), '+55 11 98765-4321');
   assert.throws(() => formatPhoneBR('1198765432'), TypeError);
 });
 
-test('decompõe telefone brasileiro e expõe sua representação E.164', () => {
+test('parses a Brazilian phone number and exposes its E.164 representation', () => {
   assert.deepEqual(parsePhoneBR('+55 (11) 98765-4321'), {
     countryCode: '55',
     ddd: '11',
@@ -59,7 +59,7 @@ test('decompõe telefone brasileiro e expõe sua representação E.164', () => {
   assert.throws(() => parsePhoneBR('abc'), TypeError);
 });
 
-test('gera celulares e telefones fixos válidos com opções de DDD e formato', () => {
+test('generates valid mobile and landline numbers with DDD and formatting options', () => {
   const mobile = generatePhoneBR({ ddd: '11', type: 'mobile', formatted: true });
   assert.match(mobile, /^\(11\) 9\d{4}-\d{4}$/);
   assert.equal(validatePhoneBR(mobile), true);
@@ -78,7 +78,14 @@ test('gera celulares e telefones fixos válidos com opções de DDD e formato', 
   assert.equal(validatePhoneBR(normalized), true);
   assert.throws(() => generatePhoneBR({ ddd: '20' }), RangeError);
 });
-test('expõe os 67 DDDs geográficos oficiais sem permitir mutação', () => {
+
+test('rejects an unknown phone type at runtime', () => {
+  assert.throws(() => generatePhoneBR({ type: 'typo' }), RangeError);
+  assert.throws(() => generatePhoneBR({ formatted: 'false' }), RangeError);
+  assert.throws(() => generatePhoneBR({ international: 'false' }), RangeError);
+});
+
+test('exposes the 67 official geographic DDDs without allowing mutation', () => {
   assert.equal(SUPPORTED_PHONE_DDDS.length, 67);
   assert.equal(SUPPORTED_PHONE_DDDS.includes('11'), true);
   assert.equal(SUPPORTED_PHONE_DDDS.includes('20'), false);

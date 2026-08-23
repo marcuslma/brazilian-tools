@@ -26,7 +26,7 @@ export interface CEPAddress {
   service?: string;
   timezone?: string;
   coordinates?: CEPCoordinates;
-  /** Resposta original do provedor, presente somente com `includeRaw: true`. */
+  /** Original provider response, present only with `includeRaw: true`. */
   raw?: Readonly<Record<string, unknown>>;
 }
 
@@ -54,16 +54,16 @@ export type CEPFetcher = (
 ) => CEPFetchResponse | Promise<CEPFetchResponse>;
 
 export interface LookupCEPOptions {
-  /** `auto` tenta BrasilAPI e usa ViaCEP como fallback. Padrão: `auto`. */
+  /** `auto` tries BrasilAPI and uses ViaCEP as a fallback. Default: `auto`. */
   provider?: CEPProvider;
-  /** Se `false`, CEP não encontrado na BrasilAPI não aciona o ViaCEP. Padrão: `true`. */
+  /** When `false`, a CEP not found by BrasilAPI does not trigger ViaCEP. Default: `true`. */
   fallbackOnNotFound?: boolean;
-  /** Inclui a resposta original do provedor em `address.raw`. Padrão: `false`. */
+  /** Includes the original provider response in `address.raw`. Default: `false`. */
   includeRaw?: boolean;
-  /** Cache injetado pelo chamador; não há cache global. */
+  /** Cache injected by the caller; there is no global cache. */
   cache?: CEPCache;
   fetcher?: CEPFetcher;
-  /** Tempo limite total das chamadas aos provedores, incluindo fallback. Padrão: 5000 ms. */
+  /** Total timeout for provider calls, including fallback. Default: 5000 ms. */
   timeoutMs?: number;
   signal?: CEPAbortSignal;
 }
@@ -71,7 +71,7 @@ export interface LookupCEPOptions {
 export type ProviderLookupCEPOptions = Omit<LookupCEPOptions, 'provider'>;
 
 export interface LookupCEPsOptions extends LookupCEPOptions {
-  /** Máximo de consultas simultâneas. Padrão: 4. */
+  /** Maximum number of simultaneous lookups. Default: 4. */
   concurrency?: number;
 }
 
@@ -87,7 +87,7 @@ export class CEPNotFoundError extends Error {
   readonly provider?: CEPResolvedProvider;
 
   constructor(cep: string, provider?: CEPResolvedProvider) {
-    super(`CEP não encontrado: ${formatCEP(cep)}.`);
+    super(`CEP not found: ${formatCEP(cep)}.`);
     if (provider !== undefined) this.provider = provider;
   }
 }
@@ -122,7 +122,7 @@ export function validateCEP(value: unknown): boolean {
 
 export function normalizeCEP(value: string | number): string {
   const cep = normalizeInput(value);
-  if (!cep || !/^\d{8}$/.test(cep)) throw new TypeError('CEP deve conter 8 dígitos.');
+  if (!cep || !/^\d{8}$/.test(cep)) throw new TypeError('CEP must contain 8 digits.');
   return cep;
 }
 
@@ -225,7 +225,7 @@ function isValidProviderPayload(
 }
 
 function abortReason(signal: AbortSignal): unknown {
-  return signal.reason ?? new Error('Consulta de CEP cancelada.');
+  return signal.reason ?? new Error('CEP lookup was cancelled.');
 }
 
 function awaitWithAbort<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
@@ -257,7 +257,7 @@ async function requestCEP(
 ): Promise<CEPAddress> {
   const fetcher = options.fetcher ?? globalThis.fetch;
   if (typeof fetcher !== 'function') {
-    throw new CEPRequestError('Fetch API não está disponível neste ambiente.', { provider });
+    throw new CEPRequestError('The Fetch API is not available in this environment.', { provider });
   }
 
   const controller = new AbortController();
@@ -267,7 +267,7 @@ async function requestCEP(
   let timedOut = false;
   const timeout = setTimeout(() => {
     timedOut = true;
-    controller.abort(new Error('Tempo limite da consulta de CEP excedido.'));
+    controller.abort(new Error('CEP lookup timed out.'));
   }, options.timeoutMs ?? 5_000);
 
   try {
@@ -278,11 +278,11 @@ async function requestCEP(
       controller.signal,
     );
     if (controller.signal.aborted)
-      throw controller.signal.reason ?? new Error('Consulta de CEP cancelada.');
+      throw controller.signal.reason ?? new Error('CEP lookup was cancelled.');
     if (response.status === 404) throw new CEPNotFoundError(cep, provider);
     if (!response.ok) {
       throw new CEPRequestError(
-        `Consulta ao ${provider === 'brasilapi' ? 'BrasilAPI' : 'ViaCEP'} falhou com HTTP ${response.status}.`,
+        `${provider === 'brasilapi' ? 'BrasilAPI' : 'ViaCEP'} lookup failed with HTTP ${response.status}.`,
         { provider, status: response.status },
       );
     }
@@ -292,14 +292,14 @@ async function requestCEP(
       controller.signal,
     );
     if (controller.signal.aborted)
-      throw controller.signal.reason ?? new Error('Consulta de CEP cancelada.');
+      throw controller.signal.reason ?? new Error('CEP lookup was cancelled.');
     if (!unknownData || typeof unknownData !== 'object' || Array.isArray(unknownData)) {
-      throw new CEPRequestError('O provedor de CEP retornou uma resposta inválida.', { provider });
+      throw new CEPRequestError('The CEP provider returned an invalid response.', { provider });
     }
     const data = unknownData as Record<string, unknown>;
     if (data.erro === true || data.erro === 'true') throw new CEPNotFoundError(cep, provider);
     if (!isValidProviderPayload(data, provider, cep)) {
-      throw new CEPRequestError('O provedor de CEP retornou uma resposta inválida.', { provider });
+      throw new CEPRequestError('The CEP provider returned an invalid response.', { provider });
     }
     const address =
       provider === 'brasilapi' ? brasilAPIAddress(data, cep) : viaCEPAddress(data, cep);
@@ -307,14 +307,14 @@ async function requestCEP(
     return address;
   } catch (error) {
     if (timedOut) {
-      throw new CEPRequestError('Tempo limite da consulta de CEP excedido.', {
+      throw new CEPRequestError('CEP lookup timed out.', {
         cause: error,
         provider,
         timedOut: true,
       });
     }
     if (error instanceof CEPNotFoundError || error instanceof CEPRequestError) throw error;
-    throw new CEPRequestError('Não foi possível consultar o CEP.', { cause: error, provider });
+    throw new CEPRequestError('Unable to look up the CEP.', { cause: error, provider });
   } finally {
     clearTimeout(timeout);
     options.signal?.removeEventListener('abort', abort);
@@ -328,16 +328,16 @@ export async function lookupCEP(
   const cep = normalizeCEP(value);
   const timeoutMs = options.timeoutMs ?? 5_000;
   if (!Number.isInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) {
-    throw new RangeError('timeoutMs deve estar entre 1 e 2147483647 milissegundos.');
+    throw new RangeError('timeoutMs must be between 1 and 2147483647 milliseconds.');
   }
 
   const provider = options.provider ?? 'auto';
   if (provider !== 'auto' && provider !== 'brasilapi' && provider !== 'viacep') {
-    throw new RangeError(`Provedor de CEP não suportado: ${String(provider)}.`);
+    throw new RangeError(`Unsupported CEP provider: ${String(provider)}.`);
   }
   const throwIfAborted = (): void => {
     if (options.signal?.aborted) {
-      throw new CEPRequestError('Consulta de CEP cancelada pelo chamador.', {
+      throw new CEPRequestError('CEP lookup was cancelled by the caller.', {
         cause: options.signal.reason,
       });
     }
@@ -348,7 +348,7 @@ export async function lookupCEP(
   try {
     cached = options.cache === undefined ? undefined : await options.cache.get(cacheKey);
   } catch (error) {
-    throw new CEPRequestError('Não foi possível ler o cache de CEP.', { cause: error });
+    throw new CEPRequestError('Unable to read the CEP cache.', { cause: error });
   }
   throwIfAborted();
   if (cached !== undefined) return cached;
@@ -356,7 +356,7 @@ export async function lookupCEP(
     try {
       await options.cache?.set(cacheKey, address);
     } catch (error) {
-      throw new CEPRequestError('Não foi possível gravar o cache de CEP.', { cause: error });
+      throw new CEPRequestError('Unable to write the CEP cache.', { cause: error });
     }
     return address;
   };
@@ -396,7 +396,7 @@ export async function lookupCEPs(
 ): Promise<CEPAddress[]> {
   const { concurrency = 4, ...lookupOptions } = options;
   if (!Number.isInteger(concurrency) || concurrency < 1) {
-    throw new RangeError('concurrency deve ser um inteiro positivo.');
+    throw new RangeError('concurrency must be a positive integer.');
   }
 
   const results = new Array<CEPAddress>(values.length);

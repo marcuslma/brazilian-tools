@@ -8,7 +8,7 @@ import {
   validateRG,
 } from '../dist/esm/index.js';
 
-test('valida a estrutura plausível de RGs sem exigir dígito verificador', () => {
+test('validates plausible RG structure without requiring a check digit', () => {
   assert.equal(validateRG('12.345.678-9'), true);
   assert.equal(validateRG('MG-12.345.678'), true);
   assert.equal(validateRG('123456789'), true);
@@ -18,19 +18,19 @@ test('valida a estrutura plausível de RGs sem exigir dígito verificador', () =
   assert.equal(validateRG(null), false);
 });
 
-test('validação estrutural não substitui a validação algorítmica', () => {
+test('structural validation does not replace algorithmic validation', () => {
   assert.equal(validateRG('12.345.678-0'), true);
   assert.equal(validateRG('12.345.678-0', { state: 'SP' }), false);
 });
 
-test('rejeita UF não suportada quando informada na validação', () => {
+test('rejects an unsupported state when supplied for validation', () => {
   assert.throws(() => validateRG('12.345.678-2', { state: 'RJ' }), RangeError);
 });
-test('valida estrutura de RG com dígito X', () => {
+test('validates RG structure with an X check digit', () => {
   assert.equal(validateRG('12.345.678-X'), true);
 });
 
-test('valida RG de São Paulo com diferentes dígitos verificadores', () => {
+test('validates São Paulo RGs with different check digits', () => {
   for (const value of [
     '000000012',
     '000000073',
@@ -44,7 +44,7 @@ test('valida RG de São Paulo com diferentes dígitos verificadores', () => {
     assert.equal(validateRG(value, { state: 'SP' }), true);
   }
 });
-test('valida RG de São Paulo com dígito numérico ou X', () => {
+test('validates São Paulo RGs with a numeric or X check digit', () => {
   assert.equal(validateRG('12.345.678-2', { state: 'SP' }), true);
   assert.equal(validateRG('10.354.222-X', { state: 'SP' }), true);
   assert.equal(validateRG('10.354.222-x', { state: 'SP' }), true);
@@ -53,13 +53,13 @@ test('valida RG de São Paulo com dígito numérico ou X', () => {
   assert.equal(validateRG('49.057.085-2', { state: 'SP' }), false);
 });
 
-test('rejeita RGs inválidos e sequências repetidas', () => {
+test('rejects invalid RGs and repeated sequences', () => {
   for (const value of ['', '123', '11.004.249-A', '00.000.000-0', null]) {
     assert.equal(validateRG(value), false);
   }
 });
 
-test('gera e formata RGs de São Paulo válidos', () => {
+test('generates and formats valid São Paulo RGs', () => {
   const raw = generateRG();
   const formatted = generateRG({ formatted: true });
   assert.match(raw, /^\d{8}[\dX]$/);
@@ -69,16 +69,21 @@ test('gera e formata RGs de São Paulo válidos', () => {
   assert.equal(formatRG('123456782'), '12.345.678-2');
 });
 
-test('rejeita UF ainda não suportada', () => {
+test('rejects a state that is not yet supported', () => {
   assert.throws(() => generateRG({ state: 'RJ' }), RangeError);
 });
 
-test('expõe as UFs com algoritmo verificável', () => {
+test('treats a null state as omitted at runtime', () => {
+  const generated = generateRG({ state: null });
+  assert.equal(validateRG(generated), true);
+});
+
+test('exposes states with a verifiable algorithm', () => {
   assert.deepEqual(SUPPORTED_RG_STATES, ['SP']);
   assert.equal(Object.isFrozen(SUPPORTED_RG_STATES), true);
 });
 
-test('sorteia uma UF suportada quando ela não é informada', () => {
+test('selects a supported state randomly when omitted', () => {
   for (let index = 0; index < 100; index++) {
     const generated = generateRG({ includeState: true, formatted: index % 2 === 0 });
     assert.equal(SUPPORTED_RG_STATES.includes(generated.state), true);
@@ -86,14 +91,19 @@ test('sorteia uma UF suportada quando ela não é informada', () => {
   }
 });
 
-test('retorna a UF solicitada junto ao RG gerado', () => {
+test('returns the requested state with the generated RG', () => {
   const generated = generateRG({ state: 'SP', formatted: true, includeState: true });
   assert.deepEqual(Object.keys(generated).sort(), ['state', 'value']);
   assert.equal(generated.state, 'SP');
   assert.equal(validateRG(generated.value, { state: 'SP' }), true);
 });
 
-test('normaliza RG de uma UF suportada sem validar o verificador', () => {
+test('rejects a non-boolean includeState at runtime', () => {
+  assert.throws(() => generateRG({ includeState: 'typo' }), RangeError);
+  assert.throws(() => generateRG({ formatted: 'false' }), RangeError);
+});
+
+test('normalizes an RG from a supported state without validating the check digit', () => {
   assert.equal(normalizeRG('12.345.678-2', { state: 'SP' }), '123456782');
   assert.equal(normalizeRG('10.354.222-x'), '10354222X');
   assert.equal(normalizeRG('49.057.085-2'), '490570852');
@@ -101,7 +111,7 @@ test('normaliza RG de uma UF suportada sem validar o verificador', () => {
   assert.throws(() => normalizeRG('12.345.678-A', { state: 'SP' }), TypeError);
 });
 
-test('normalização de RG não depende do gerador aleatório', () => {
+test('RG normalization does not depend on the random generator', () => {
   const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
   Object.defineProperty(globalThis, 'crypto', { configurable: true, value: undefined });
   try {

@@ -1,7 +1,7 @@
 {
   "name": "brazilian-tools",
   "version": "0.1.0",
-  "description": "Utilitários brasileiros sem dependências de produção: CPF, CNPJ, RG, telefone e CEP.",
+  "description": "Dependency-free Brazilian utilities for CPF, CNPJ, RG, phone numbers, and CEP.",
   "author": "Marcus Maurmann",
   "repository": {
     "type": "git",
@@ -120,7 +120,7 @@
     "@eslint/js": "^10.0.1",
     "c8": "^12.0.0",
     "esbuild": "^0.28.2",
-    "eslint": "^10.8.1",
+    "eslint": "^10.9.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.11.0",
     "prettier": "^3.9.6",

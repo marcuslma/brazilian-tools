@@ -69,7 +69,7 @@ O caminho ESM usa exports nomeados, módulos separados e `sideEffects: false`. B
 // recomendado
 import { validateCPF } from 'brazilian-tools';
 
-// menos explícito para tree-shaking
+// less explicit for tree-shaking
 import * as BrazilianTools from 'brazilian-tools';
 ```
 
@@ -110,7 +110,7 @@ validatePhoneBR('+55 (11) 98765-4321'); // true
 formatPhoneBR('11987654321'); // (11) 98765-4321
 parsePhoneBR('11987654321').e164; // +5511987654321
 
-validateCEP('01001-000'); // true: valida somente a estrutura
+validateCEP('01001-000'); // true: validates structure only
 const address = await lookupCEP('01001-000'); // BrasilAPI → fallback ViaCEP
 console.log(address.city, address.state); // São Paulo SP
 console.log(address.provider); // brasilapi ou viacep
@@ -244,13 +244,13 @@ O módulo cobre números geográficos com DDD: fixos de oito dígitos iniciados 
 
 ```ts
 interface LookupCEPOptions {
-  provider?: 'auto' | 'brasilapi' | 'viacep'; // padrão: auto
-  fallbackOnNotFound?: boolean; // padrão: true
-  includeRaw?: boolean; // inclui address.raw; padrão: false
-  cache?: CEPCache; // Map também é compatível
-  fetcher?: CEPFetcher; // compatível com fetch; tipo autocontido
-  timeoutMs?: number; // inteiro entre 1–2147483647; padrão: 5000
-  signal?: CEPAbortSignal; // compatível com AbortSignal
+  provider?: 'auto' | 'brasilapi' | 'viacep'; // default: auto
+  fallbackOnNotFound?: boolean; // default: true
+  includeRaw?: boolean; // includes address.raw; default: false
+  cache?: CEPCache; // Map is also supported
+  fetcher?: CEPFetcher; // fetch-compatible; self-contained type
+  timeoutMs?: number; // integer between 1–2147483647; default: 5000
+  signal?: CEPAbortSignal; // AbortSignal-compatible
 }
 ```
 
@@ -275,7 +275,7 @@ Consultas em lote preservam a ordem de entrada e limitam a concorrência. A prim
 
 ```ts
 const addresses = await lookupCEPs(['01001000', '20040002'], {
-  concurrency: 2, // padrão: 4
+  concurrency: 2, // default: 4
   timeoutMs: 5_000, // aplicado individualmente a cada CEP
 });
 ```

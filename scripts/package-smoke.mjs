@@ -14,14 +14,14 @@ function run(command, args, cwd) {
   if (result.status !== 0) {
     process.stderr.write(result.stdout);
     process.stderr.write(result.stderr);
-    throw new Error(`${command} ${args.join(' ')} falhou com código ${String(result.status)}.`);
+    throw new Error(`${command} ${args.join(' ')} failed with exit code ${String(result.status)}.`);
   }
 }
 
 try {
   run(npm, ['pack', '--silent', '--pack-destination', temporaryDirectory], root);
   const tarball = readdirSync(temporaryDirectory).find((file) => file.endsWith('.tgz'));
-  assert.ok(tarball, 'npm pack não gerou um tarball.');
+  assert.ok(tarball, 'npm pack did not generate a tarball.');
 
   writeFileSync(join(temporaryDirectory, 'package.json'), '{"private":true}\n');
   run(
@@ -144,7 +144,7 @@ assert.equal(validateRG('123456782'), true);
   );
   run(process.execPath, [join(temporaryDirectory, 'consumer.cjs')], temporaryDirectory);
   process.stdout.write(
-    'Tarball instalado: import ESM, require CJS, runtime e tipos TypeScript OK.\n',
+    'Tarball installed: ESM import, CJS require, runtime, and TypeScript types OK.\n',
   );
 } finally {
   rmSync(temporaryDirectory, { recursive: true, force: true });

@@ -1,4 +1,4 @@
-import { inputString, randomFrom } from './internal.js';
+import { booleanOption, inputString, randomFrom } from './internal.js';
 
 export interface GenerateCPFOptions {
   formatted?: boolean;
@@ -15,7 +15,7 @@ function normalizeInput(value: unknown): string | null {
 
 export function normalizeCPF(value: string | number): string {
   const cpf = normalizeInput(value);
-  if (!cpf || !/^\d{11}$/.test(cpf)) throw new TypeError('CPF deve conter 11 dígitos.');
+  if (!cpf || !/^\d{11}$/.test(cpf)) throw new TypeError('CPF must contain 11 digits.');
   return cpf;
 }
 
@@ -41,10 +41,11 @@ export function formatCPF(value: string | number): string {
 }
 
 export function generateCPF(options: GenerateCPFOptions = {}): string {
+  const formatted = booleanOption(options.formatted, 'formatted');
   let base: string;
   do base = randomFrom('0123456789', 9);
   while (/^(\d)\1{8}$/.test(base));
   const first = digit(base, 10);
   const cpf = `${base}${first}${digit(`${base}${first}`, 11)}`;
-  return options.formatted ? formatCPF(cpf) : cpf;
+  return formatted ? formatCPF(cpf) : cpf;
 }

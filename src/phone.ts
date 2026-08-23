@@ -1,6 +1,6 @@
-import { inputString, randomFrom, randomInteger } from './internal.js';
+import { booleanOption, inputString, randomFrom, randomInteger } from './internal.js';
 
-/** Códigos de área geográficos em uso no Plano de Numeração Brasileiro. */
+/** Geographic area codes currently in use in Brazil's numbering plan. */
 export const SUPPORTED_PHONE_DDDS = Object.freeze([
   '11',
   '12',
@@ -137,18 +137,23 @@ function normalizeDigits(digits: string): NormalizedPhoneBR | null {
 }
 
 export function generatePhoneBR(options: GeneratePhoneBROptions = {}): string {
+  const formatted = booleanOption(options.formatted, 'formatted');
+  const international = booleanOption(options.international, 'international');
   const ddd = options.ddd ?? SUPPORTED_PHONE_DDDS[randomInteger(SUPPORTED_PHONE_DDDS.length)]!;
   if (!(SUPPORTED_PHONE_DDDS as readonly string[]).includes(ddd)) {
-    throw new RangeError('DDD deve pertencer à lista de códigos suportados.');
+    throw new RangeError('DDD must belong to the list of supported area codes.');
   }
   const type = options.type ?? (randomInteger(2) === 0 ? 'mobile' : 'landline');
+  if (type !== 'mobile' && type !== 'landline') {
+    throw new RangeError(`Unsupported phone type: ${String(type)}.`);
+  }
   const number =
     type === 'mobile'
       ? `9${randomFrom('0123456789', 8)}`
       : `${randomFrom('2345', 1)}${randomFrom('0123456789', 7)}`;
   const national = `${ddd}${number}`;
-  return options.formatted
-    ? formatPhoneBR(national, options.international ? { international: true } : {})
+  return formatted
+    ? formatPhoneBR(national, international ? { international: true } : {})
     : national;
 }
 
@@ -160,7 +165,7 @@ export function normalizePhoneBR(value: string | number): string {
   const phone = normalizeInput(value);
   if (!phone) {
     throw new TypeError(
-      'Telefone deve conter um DDD válido e um número fixo ou celular brasileiro.',
+      'Phone must contain a valid DDD and a Brazilian landline or mobile number.',
     );
   }
   return phone.national;
@@ -170,7 +175,7 @@ export function formatPhoneBR(value: string | number, options: FormatPhoneBROpti
   const phone = normalizeInput(value);
   if (!phone) {
     throw new TypeError(
-      'Telefone deve conter um DDD válido e um número fixo ou celular brasileiro.',
+      'Phone must contain a valid DDD and a Brazilian landline or mobile number.',
     );
   }
   const split = phone.type === 'mobile' ? 5 : 4;
@@ -182,7 +187,7 @@ export function parsePhoneBR(value: string | number): ParsedPhoneBR {
   const phone = normalizeInput(value);
   if (!phone) {
     throw new TypeError(
-      'Telefone deve conter um DDD válido e um número fixo ou celular brasileiro.',
+      'Phone must contain a valid DDD and a Brazilian landline or mobile number.',
     );
   }
   return {

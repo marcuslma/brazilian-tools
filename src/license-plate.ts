@@ -1,4 +1,4 @@
-import { inputString, randomFrom } from './internal.js';
+import { booleanOption, inputString, randomFrom } from './internal.js';
 
 export type LicensePlateKind = 'old' | 'mercosul';
 
@@ -28,18 +28,22 @@ function kindOf(value: string): LicensePlateKind {
 }
 
 export function generateLicensePlate(options: GenerateLicensePlateOptions = {}): string {
+  const formatted = booleanOption(options.formatted, 'formatted');
   const kind = options.kind ?? 'mercosul';
+  if (kind !== 'old' && kind !== 'mercosul') {
+    throw new RangeError(`Unsupported license plate kind: ${String(kind)}.`);
+  }
   const letters = randomFrom('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 3);
   const plate =
     kind === 'old'
       ? `${letters}${randomFrom('0123456789', 4)}`
       : `${letters}${randomFrom('0123456789', 1)}${randomFrom('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 1)}${randomFrom('0123456789', 2)}`;
-  return options.formatted ? formatLicensePlate(plate) : plate;
+  return formatted ? formatLicensePlate(plate) : plate;
 }
 
 export function normalizeLicensePlate(value: string): string {
   const plate = normalizeInput(value);
-  if (!plate) throw new TypeError('Placa deve seguir o formato antigo ou Mercosul.');
+  if (!plate) throw new TypeError('License plate must use the old or Mercosur format.');
   return plate;
 }
 

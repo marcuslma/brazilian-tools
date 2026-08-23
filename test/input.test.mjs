@@ -41,7 +41,7 @@ const cases = [
   },
 ];
 
-test('rejeita números inválidos e máscaras fora de posição em todos os documentos', () => {
+test('rejects invalid numbers and misplaced masks across all documents', () => {
   for (const { normalize, validate, values } of cases) {
     for (const value of values) {
       assert.equal(validate(value), false);

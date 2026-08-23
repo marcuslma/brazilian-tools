@@ -77,7 +77,7 @@ export function isBrazilianState(value: unknown): value is string {
 
 export function getBrazilianStatesByRegion(region: string): readonly BrazilianState[] {
   if (!(BRAZILIAN_REGIONS as readonly string[]).includes(region)) {
-    throw new RangeError(`Região brasileira não suportada: ${region}.`);
+    throw new RangeError(`Unsupported Brazilian region: ${region}.`);
   }
   return BRAZILIAN_STATES.filter((state) => state.region === region);
 }

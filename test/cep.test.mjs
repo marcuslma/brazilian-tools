@@ -10,11 +10,11 @@ import {
   validateCEP,
 } from '../dist/esm/index.js';
 
-test('rejeita provedor inválido antes de consultar a rede', async () => {
+test('rejects an invalid provider before making a network request', async () => {
   await assert.rejects(lookupCEP('01001000', { provider: 'inexistente' }), RangeError);
 });
 
-test('encapsula fetcher indisponível e payload JSON inválido', async () => {
+test('wraps an unavailable fetcher and invalid JSON payload', async () => {
   await assert.rejects(
     lookupCEP('01001000', { provider: 'viacep', fetcher: {} }),
     (error) => error instanceof CEPRequestError && error.provider === 'viacep',
@@ -28,7 +28,7 @@ test('encapsula fetcher indisponível e payload JSON inválido', async () => {
   );
 });
 
-test('normaliza campos não textuais da BrasilAPI como vazios', async () => {
+test('normalizes non-text BrasilAPI fields as empty', async () => {
   const address = await lookupCEP('01001000', {
     provider: 'brasilapi',
     fetcher: async () => ({
@@ -51,7 +51,7 @@ test('normaliza campos não textuais da BrasilAPI como vazios', async () => {
   assert.equal(address.timezone, undefined);
 });
 
-test('valida e formata CEP sem consultar existência', () => {
+test('validates and formats CEP without checking existence', () => {
   assert.equal(validateCEP('01001-000'), true);
   assert.equal(validateCEP('01001000'), true);
   assert.equal(validateCEP('01001-00'), false);
@@ -60,14 +60,14 @@ test('valida e formata CEP sem consultar existência', () => {
   assert.throws(() => formatCEP('123'), TypeError);
 });
 
-test('normaliza CEP sem consultar sua existência', () => {
+test('normalizes CEP without checking existence', () => {
   assert.equal(normalizeCEP('01001-000'), '01001000');
   assert.equal(normalizeCEP('99999-999'), '99999999');
   assert.throws(() => normalizeCEP('123'), TypeError);
   assert.throws(() => normalizeCEP('01001x000'), TypeError);
 });
 
-test('busca CEP no ViaCEP e devolve resultado tipado', async () => {
+test('looks up CEP through ViaCEP and returns a typed result', async () => {
   let requestedUrl = '';
   const fetcher = async (url) => {
     requestedUrl = String(url);
@@ -100,7 +100,7 @@ test('busca CEP no ViaCEP e devolve resultado tipado', async () => {
   assert.equal(address.provider, 'viacep');
 });
 
-test('normaliza o CEP devolvido pelo ViaCEP mesmo quando vier sem máscara', async () => {
+test('normalizes CEP returned by ViaCEP even without a mask', async () => {
   const address = await lookupCEP('01001-000', {
     provider: 'viacep',
     fetcher: async () =>
@@ -115,7 +115,7 @@ test('normaliza o CEP devolvido pelo ViaCEP mesmo quando vier sem máscara', asy
   assert.equal(address.cep, '01001-000');
 });
 
-test('busca CEP explicitamente na BrasilAPI e normaliza metadados', async () => {
+test('looks up CEP explicitly through BrasilAPI and normalizes metadata', async () => {
   let requestedUrl = '';
   const address = await lookupCEP('06514-340', {
     provider: 'brasilapi',
@@ -162,7 +162,7 @@ test('busca CEP explicitamente na BrasilAPI e normaliza metadados', async () => 
   });
 });
 
-test('ignora coordenadas vazias ou fora da faixa geográfica', async () => {
+test('ignores empty or out-of-range geographic coordinates', async () => {
   const empty = await lookupCEP('01001-000', {
     provider: 'brasilapi',
     fetcher: async () =>
@@ -191,7 +191,7 @@ test('ignora coordenadas vazias ou fora da faixa geográfica', async () => {
   assert.equal(outOfRange.coordinates, undefined);
 });
 
-test('preserva a resposta original somente quando solicitado', async () => {
+test('preserves the original response only when requested', async () => {
   const payload = { cep: '01001000', state: 'SP', city: 'São Paulo', custom: 'valor' };
   const fetcher = async () => new Response(JSON.stringify(payload));
   const regular = await lookupCEP('01001-000', { provider: 'brasilapi', fetcher });
@@ -205,7 +205,7 @@ test('preserva a resposta original somente quando solicitado', async () => {
   assert.deepEqual(detailed.raw, payload);
 });
 
-test('reutiliza cache injetado sem manter estado global', async () => {
+test('reuses injected cache without keeping global state', async () => {
   const cache = new Map();
   let calls = 0;
   const options = {
@@ -224,7 +224,7 @@ test('reutiliza cache injetado sem manter estado global', async () => {
   assert.equal(cache.size, 1);
 });
 
-test('encapsula falhas de leitura e escrita do cache sem iniciar fallback', async () => {
+test('wraps cache read and write failures without starting fallback', async () => {
   const getError = new Error('Falha de leitura.');
   await assert.rejects(
     lookupCEP('01001-000', {
@@ -258,7 +258,7 @@ test('encapsula falhas de leitura e escrita do cache sem iniciar fallback', asyn
   assert.equal(calls, 1);
 });
 
-test('consulta CEPs em lote preservando ordem e limite de concorrência', async () => {
+test('looks up CEPs in batches while preserving order and concurrency limits', async () => {
   let active = 0;
   let maxActive = 0;
   const addresses = await lookupCEPs(['01001000', '20040002', '30140071'], {
@@ -281,7 +281,7 @@ test('consulta CEPs em lote preservando ordem e limite de concorrência', async 
   assert.equal(maxActive, 2);
 });
 
-test('rejeita concorrência de lote inválida antes de consultar a rede', async () => {
+test('rejects invalid batch concurrency before making a network request', async () => {
   let called = false;
   await assert.rejects(
     lookupCEPs(['01001000'], {
@@ -296,7 +296,7 @@ test('rejeita concorrência de lote inválida antes de consultar a rede', async 
   assert.equal(called, false);
 });
 
-test('lote não inicia novos itens depois da primeira falha', async () => {
+test('batch processing does not start new items after the first failure', async () => {
   let calls = 0;
   await assert.rejects(
     lookupCEPs(['01001000', '20040002', '30140071', '80010000'], {
@@ -316,7 +316,7 @@ test('lote não inicia novos itens depois da primeira falha', async () => {
   assert.equal(calls, 2);
 });
 
-test('distingue CEP inexistente de falha HTTP', async () => {
+test('distinguishes a missing CEP from an HTTP failure', async () => {
   await assert.rejects(
     lookupCEP('99999-999', {
       provider: 'viacep',
@@ -327,18 +327,18 @@ test('distingue CEP inexistente de falha HTTP', async () => {
   await assert.rejects(
     lookupCEP('01001-000', {
       provider: 'viacep',
-      fetcher: async () => new Response('indisponível', { status: 503 }),
+      fetcher: async () => new Response('unavailable', { status: 503 }),
     }),
     CEPRequestError,
   );
 });
 
-test('usa BrasilAPI por padrão e faz fallback para ViaCEP', async () => {
+test('uses BrasilAPI by default and falls back to ViaCEP', async () => {
   const urls = [];
   const address = await lookupCEP('06514340', {
     fetcher: async (url) => {
       urls.push(String(url));
-      if (String(url).includes('brasilapi')) return new Response('indisponível', { status: 503 });
+      if (String(url).includes('brasilapi')) return new Response('unavailable', { status: 503 });
       return new Response(
         JSON.stringify({
           cep: '06514-340',
@@ -362,13 +362,13 @@ test('usa BrasilAPI por padrão e faz fallback para ViaCEP', async () => {
   assert.equal(address.street, 'Rua Baquara');
 });
 
-test('não faz fallback para erro HTTP 4xx definitivo', async () => {
+test('does not fall back for a definitive HTTP 4xx error', async () => {
   let calls = 0;
   await assert.rejects(
     lookupCEP('01001-000', {
       fetcher: async () => {
         calls++;
-        return new Response('requisição inválida', { status: 400 });
+        return new Response('invalid request', { status: 400 });
       },
     }),
     (error) =>
@@ -377,7 +377,7 @@ test('não faz fallback para erro HTTP 4xx definitivo', async () => {
   assert.equal(calls, 1);
 });
 
-test('faz fallback para HTTP 408 e 429 enquanto há orçamento', async () => {
+test('falls back for HTTP 408 and 429 while time remains', async () => {
   for (const status of [408, 429]) {
     let calls = 0;
     const address = await lookupCEP('01001-000', {
@@ -398,7 +398,7 @@ test('faz fallback para HTTP 408 e 429 enquanto há orçamento', async () => {
   }
 });
 
-test('faz fallback quando o provedor retorna objeto sem os campos mínimos', async () => {
+test('falls back when the provider returns an object missing required fields', async () => {
   let calls = 0;
   const address = await lookupCEP('01001-000', {
     fetcher: async (url) => {
@@ -419,7 +419,7 @@ test('faz fallback quando o provedor retorna objeto sem os campos mínimos', asy
   assert.equal(address.provider, 'viacep');
 });
 
-test('permite desativar fallback quando o primeiro provedor não encontra o CEP', async () => {
+test('allows fallback to be disabled when the first provider does not find the CEP', async () => {
   let calls = 0;
   await assert.rejects(
     lookupCEP('99999-999', {
@@ -434,7 +434,7 @@ test('permite desativar fallback quando o primeiro provedor não encontra o CEP'
   assert.equal(calls, 1);
 });
 
-test('não consulta ViaCEP quando BrasilAPI responde no modo automático', async () => {
+test('does not call ViaCEP when BrasilAPI responds in automatic mode', async () => {
   let calls = 0;
   const address = await lookupCEP('06514340', {
     provider: 'auto',
@@ -457,7 +457,7 @@ test('não consulta ViaCEP quando BrasilAPI responde no modo automático', async
   assert.equal(address.provider, 'brasilapi');
 });
 
-test('atalhos selecionam explicitamente cada provedor', async () => {
+test('shortcuts explicitly select each provider', async () => {
   const urls = [];
   const fetcher = async (url) => {
     urls.push(String(url));
@@ -475,7 +475,7 @@ test('atalhos selecionam explicitamente cada provedor', async () => {
   assert.equal(urls.length, 2);
 });
 
-test('não chama a rede para CEP estruturalmente inválido', async () => {
+test('does not call the network for a structurally invalid CEP', async () => {
   let called = false;
   await assert.rejects(
     lookupCEP('123', {
@@ -489,7 +489,7 @@ test('não chama a rede para CEP estruturalmente inválido', async () => {
   assert.equal(called, false);
 });
 
-test('não tenta fallback quando o chamador cancela a consulta', async () => {
+test('does not fall back when the caller cancels the lookup', async () => {
   const controller = new AbortController();
   let calls = 0;
   const lookup = lookupCEP('01001-000', {
@@ -504,15 +504,15 @@ test('não tenta fallback quando o chamador cancela a consulta', async () => {
     },
   });
 
-  controller.abort(new Error('Consulta cancelada pelo chamador.'));
+  controller.abort(new Error('Lookup cancelled by the caller.'));
 
   await assert.rejects(lookup, CEPRequestError);
   assert.equal(calls, 1);
 });
 
-test('não chama a rede quando o sinal já está cancelado', async () => {
+test('does not call the network when the signal is already aborted', async () => {
   const controller = new AbortController();
-  controller.abort(new Error('Consulta cancelada antes de iniciar.'));
+  controller.abort(new Error('Lookup cancelled before starting.'));
   let called = false;
 
   await assert.rejects(
@@ -528,7 +528,7 @@ test('não chama a rede quando o sinal já está cancelado', async () => {
   assert.equal(called, false);
 });
 
-test('encerra consulta que excede o timeout', async () => {
+test('ends a lookup that exceeds the timeout', async () => {
   await assert.rejects(
     lookupCEP('01001-000', {
       provider: 'brasilapi',
@@ -544,7 +544,7 @@ test('encerra consulta que excede o timeout', async () => {
   );
 });
 
-test('aplica o timeout à operação completa sem renovar o prazo no fallback', async () => {
+test('applies the timeout to the complete operation without renewing it during fallback', async () => {
   let calls = 0;
   await assert.rejects(
     lookupCEP('01001-000', {
@@ -561,7 +561,7 @@ test('aplica o timeout à operação completa sem renovar o prazo no fallback', 
   assert.equal(calls, 1);
 });
 
-test('uma falha rápida permite fallback, que usa apenas o orçamento restante', async () => {
+test('a fast failure allows fallback to use only the remaining budget', async () => {
   let calls = 0;
   await assert.rejects(
     lookupCEP('01001-000', {
@@ -581,7 +581,7 @@ test('uma falha rápida permite fallback, que usa apenas o orçamento restante',
   assert.equal(calls, 2);
 });
 
-test('não aceita resposta de fetcher que ignora timeout', async () => {
+test('rejects a fetcher response that ignores the timeout', async () => {
   await assert.rejects(
     lookupCEP('01001000', {
       provider: 'viacep',
@@ -598,7 +598,7 @@ test('não aceita resposta de fetcher que ignora timeout', async () => {
     (error) => error instanceof CEPRequestError && error.provider === 'viacep',
   );
 });
-test('não fica pendente quando json ignora timeout', async () => {
+test('does not remain pending when json ignores the timeout', async () => {
   await assert.rejects(
     lookupCEP('01001000', {
       provider: 'viacep',
@@ -612,7 +612,7 @@ test('não fica pendente quando json ignora timeout', async () => {
     (error) => error instanceof CEPRequestError && error.provider === 'viacep',
   );
 });
-test('rejeita timeout inválido antes de consultar a rede', async () => {
+test('rejects an invalid timeout before making a network request', async () => {
   let called = false;
   for (const timeoutMs of [0, 0.5, Number.POSITIVE_INFINITY, 2_147_483_648]) {
     await assert.rejects(
@@ -629,7 +629,7 @@ test('rejeita timeout inválido antes de consultar a rede', async () => {
   assert.equal(called, false);
 });
 
-test('rejeita JSON inválido retornado pelo provedor', async () => {
+test('rejects invalid JSON returned by the provider', async () => {
   await assert.rejects(
     lookupCEP('01001-000', {
       provider: 'viacep',
@@ -639,7 +639,7 @@ test('rejeita JSON inválido retornado pelo provedor', async () => {
   );
 });
 
-test('remove o listener do sinal do chamador após a consulta', async () => {
+test('removes the caller signal listener after the lookup', async () => {
   let added = 0;
   let removed = 0;
   const signal = {
