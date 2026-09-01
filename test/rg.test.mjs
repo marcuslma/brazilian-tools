@@ -51,6 +51,7 @@ test('validates São Paulo RGs with a numeric or X check digit', () => {
   assert.equal(validateRG('31.011.111-0', { state: 'SP' }), true);
   assert.equal(validateRG('48.329.673-9', { state: 'SP' }), true);
   assert.equal(validateRG('49.057.085-2', { state: 'SP' }), false);
+  assert.equal(validateRG('123', { state: 'SP' }), false);
 });
 
 test('rejects invalid RGs and repeated sequences', () => {
@@ -73,9 +74,11 @@ test('rejects a state that is not yet supported', () => {
   assert.throws(() => generateRG({ state: 'RJ' }), RangeError);
 });
 
-test('treats a null state as omitted at runtime', () => {
-  const generated = generateRG({ state: null });
-  assert.equal(validateRG(generated), true);
+test('rejects a null state at runtime', () => {
+  assert.throws(() => generateRG({ state: null }), RangeError);
+  assert.throws(() => validateRG('123456782', { state: null }), RangeError);
+  assert.throws(() => normalizeRG('123456782', { state: null }), RangeError);
+  assert.throws(() => formatRG('123456782', { state: null }), RangeError);
 });
 
 test('exposes states with a verifiable algorithm', () => {
@@ -100,7 +103,18 @@ test('returns the requested state with the generated RG', () => {
 
 test('rejects a non-boolean includeState at runtime', () => {
   assert.throws(() => generateRG({ includeState: 'typo' }), RangeError);
+  assert.throws(() => generateRG({ includeState: null }), RangeError);
   assert.throws(() => generateRG({ formatted: 'false' }), RangeError);
+  assert.throws(() => generateRG({ formatted: null }), RangeError);
+});
+
+test('rejects malformed RG option containers', () => {
+  for (const options of [null, 'state', []]) {
+    assert.throws(() => generateRG(options), TypeError);
+    assert.throws(() => validateRG('123456782', options), TypeError);
+    assert.throws(() => normalizeRG('123456782', options), TypeError);
+    assert.throws(() => formatRG('123456782', options), TypeError);
+  }
 });
 
 test('normalizes an RG from a supported state without validating the check digit', () => {

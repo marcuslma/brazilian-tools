@@ -14,11 +14,61 @@ test('rejects an invalid provider before making a network request', async () => 
   await assert.rejects(lookupCEP('01001000', { provider: 'inexistente' }), RangeError);
 });
 
-test('wraps an unavailable fetcher and invalid JSON payload', async () => {
+test('validates public CEPRequestError options', () => {
+  const cause = new Error('Network failure.');
+  const error = new CEPRequestError('Request failed.', {
+    cause,
+    provider: 'viacep',
+    status: 503,
+    timedOut: true,
+  });
+  assert.equal(error.cause, cause);
+  assert.equal(error.provider, 'viacep');
+  assert.equal(error.status, 503);
+  assert.equal(error.timedOut, true);
+
+  for (const options of [null, 'options', []]) {
+    assert.throws(() => new CEPRequestError('Request failed.', options), TypeError);
+  }
+  assert.throws(() => new CEPRequestError('Request failed.', { timedOut: null }), RangeError);
+  assert.throws(() => new CEPRequestError('Request failed.', { provider: 'auto' }), RangeError);
+  assert.throws(() => new CEPRequestError('Request failed.', { status: 99 }), RangeError);
+  assert.throws(() => new CEPNotFoundError('01001000', 'auto'), RangeError);
+});
+
+test('rejects malformed lookup options before cache or network effects', async () => {
+  for (const options of [null, 'lookup', []]) {
+    await assert.rejects(lookupCEP('01001000', options), TypeError);
+  }
+
+  let calls = 0;
+  const fetcher = async () => {
+    calls++;
+    return new Response(JSON.stringify({ cep: '01001000', state: 'SP', city: 'São Paulo' }));
+  };
+
+  await assert.rejects(lookupCEP('01001000', { includeRaw: 'yes', fetcher }), RangeError);
+  await assert.rejects(lookupCEP('01001000', { fallbackOnNotFound: null, fetcher }), RangeError);
+  await assert.rejects(lookupCEP('01001000', { fetcher: {} }), TypeError);
+  await assert.rejects(lookupCEP('01001000', { cache: null, fetcher }), TypeError);
   await assert.rejects(
-    lookupCEP('01001000', { provider: 'viacep', fetcher: {} }),
-    (error) => error instanceof CEPRequestError && error.provider === 'viacep',
+    lookupCEP('01001000', { cache: { get: () => undefined }, fetcher }),
+    TypeError,
   );
+  await assert.rejects(lookupCEP('01001000', { signal: null, fetcher }), TypeError);
+  await assert.rejects(lookupCEP('01001000', { signal: {}, fetcher }), TypeError);
+  assert.equal(calls, 0);
+});
+
+test('rejects malformed batch values and option containers', async () => {
+  await assert.rejects(lookupCEPs(null), TypeError);
+
+  for (const options of [null, 'lookup', []]) {
+    await assert.rejects(lookupCEPs(['01001000'], options), TypeError);
+  }
+});
+
+test('wraps an invalid JSON payload', async () => {
   await assert.rejects(
     lookupCEP('01001000', {
       provider: 'viacep',
@@ -26,6 +76,21 @@ test('wraps an unavailable fetcher and invalid JSON payload', async () => {
     }),
     (error) => error instanceof CEPRequestError && error.provider === 'viacep',
   );
+});
+
+test('wraps an unavailable global fetch implementation', async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'fetch');
+  Object.defineProperty(globalThis, 'fetch', { configurable: true, value: undefined });
+
+  try {
+    await assert.rejects(
+      lookupCEP('01001000', { provider: 'viacep' }),
+      (error) => error instanceof CEPRequestError && error.provider === 'viacep',
+    );
+  } finally {
+    if (descriptor) Object.defineProperty(globalThis, 'fetch', descriptor);
+    else delete globalThis.fetch;
+  }
 });
 
 test('normalizes non-text BrasilAPI fields as empty', async () => {

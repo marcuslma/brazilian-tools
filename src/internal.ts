@@ -11,8 +11,21 @@ export function onlyDigits(value: unknown): string | null {
   return text.replace(/\D/g, '');
 }
 
+export function optionsObject(value: unknown, name: string): Record<string, unknown> {
+  if (value === undefined) return {};
+  if (
+    value === null ||
+    typeof value !== 'object' ||
+    Array.isArray(value) ||
+    ![Object.prototype, null].includes(Object.getPrototypeOf(value))
+  ) {
+    throw new TypeError(`${name} must be a plain object.`);
+  }
+  return value as Record<string, unknown>;
+}
+
 export function booleanOption(value: unknown, name: string, defaultValue = false): boolean {
-  const option = value ?? defaultValue;
+  const option = value === undefined ? defaultValue : value;
   if (typeof option !== 'boolean') {
     throw new RangeError(`${name} must be boolean: ${String(option)}.`);
   }

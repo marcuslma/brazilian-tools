@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  generateCNH,
+  generateCNPJ,
+  generateCPF,
+  generateLicensePlate,
+  generatePIS,
   normalizeCEP,
   normalizeCNPJ,
   normalizeCPF,
@@ -46,6 +51,16 @@ test('rejects invalid numbers and misplaced masks across all documents', () => {
     for (const value of values) {
       assert.equal(validate(value), false);
       assert.throws(() => normalize(value), TypeError);
+    }
+  }
+});
+
+test('all document generators reject malformed option containers', () => {
+  const generators = [generateCPF, generateCNPJ, generatePIS, generateCNH, generateLicensePlate];
+
+  for (const generate of generators) {
+    for (const options of [null, 'invalid', []]) {
+      assert.throws(() => generate(options), TypeError);
     }
   }
 });

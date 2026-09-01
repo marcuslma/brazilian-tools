@@ -33,12 +33,19 @@ test('generates a formatted CNPJ when requested', () => {
   const value = generateCNPJ({ kind: 'alphanumeric', formatted: true });
   assert.match(value, /^[A-Z0-9]{2}\.[A-Z0-9]{3}\.[A-Z0-9]{3}\/[A-Z0-9]{4}-\d{2}$/);
   assert.equal(validateCNPJ(value), true);
-  assert.equal(validateCNPJ(generateCNPJ({ kind: null })), true);
 });
 
 test('rejects an unknown CNPJ kind at runtime', () => {
   assert.throws(() => generateCNPJ({ kind: 'typo' }), RangeError);
+  assert.throws(() => generateCNPJ({ kind: null }), RangeError);
   assert.throws(() => generateCNPJ({ formatted: 'false' }), RangeError);
+  assert.throws(() => generateCNPJ({ formatted: null }), RangeError);
+});
+
+test('rejects malformed CNPJ generator option containers', () => {
+  for (const options of [null, 'formatted', []]) {
+    assert.throws(() => generateCNPJ(options), TypeError);
+  }
 });
 
 test('normalizes numeric or alphanumeric CNPJ without validating check digits', () => {

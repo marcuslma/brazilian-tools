@@ -1,4 +1,10 @@
-import { booleanOption, inputString, randomFrom, randomInteger } from './internal.js';
+import {
+  booleanOption,
+  inputString,
+  optionsObject,
+  randomFrom,
+  randomInteger,
+} from './internal.js';
 
 /** States whose check-digit algorithm is implemented and tested. */
 export const SUPPORTED_RG_STATES = Object.freeze(['SP'] as const);
@@ -52,37 +58,41 @@ function structuralInput(value: unknown): string | null {
   return compact;
 }
 
-function ensureSupportedState(state: string): asserts state is RGState {
-  if (!(SUPPORTED_RG_STATES as readonly string[]).includes(state)) {
+function ensureSupportedState(state: unknown): asserts state is RGState {
+  if (typeof state !== 'string' || !(SUPPORTED_RG_STATES as readonly string[]).includes(state)) {
     throw new RangeError(
-      `Unsupported state: ${state}. States with a verifiable algorithm: ${SUPPORTED_RG_STATES.join(', ')}.`,
+      `Unsupported state: ${String(state)}. States with a verifiable algorithm: ${SUPPORTED_RG_STATES.join(', ')}.`,
     );
   }
 }
 
-function selectState(state?: string): RGState {
-  if (state !== undefined && state !== null) {
+function selectState(state: unknown): RGState {
+  if (state !== undefined) {
     ensureSupportedState(state);
     return state;
   }
   return SUPPORTED_RG_STATES[randomInteger(SUPPORTED_RG_STATES.length)]!;
 }
 
-function stateForNormalization(state?: string): RGState {
-  if (state !== undefined && state !== null) {
+function stateForNormalization(state: unknown): RGState {
+  if (state !== undefined) {
     ensureSupportedState(state);
     return state;
   }
   return SUPPORTED_RG_STATES[0]!;
 }
 
-export function normalizeRG(value: string | number, options: RGOptions = {}): string {
-  const state = stateForNormalization(options.state);
+function normalizeForState(value: string | number, state: RGState): string {
   const rg = normalizeInput(value);
   if (state === 'SP' && (!rg || !/^\d{8}[\dX]$/.test(rg))) {
     throw new TypeError('São Paulo RG must contain 8 digits and a numeric or X check digit.');
   }
   return rg!;
+}
+
+export function normalizeRG(value: string | number, options: RGOptions = {}): string {
+  const parsedOptions = optionsObject(options, 'RGOptions');
+  return normalizeForState(value, stateForNormalization(parsedOptions.state));
 }
 
 function spDigit(base: string): string {
@@ -105,15 +115,17 @@ function validateSP(value: unknown): boolean {
  * With a state, requires a supported state algorithm.
  */
 export function validateRG(value: unknown, options: { state?: string } = {}): boolean {
-  if (options.state !== undefined) {
-    ensureSupportedState(options.state);
+  const parsedOptions = optionsObject(options, 'RGOptions');
+  if (parsedOptions.state !== undefined) {
+    ensureSupportedState(parsedOptions.state);
     return validateSP(value);
   }
   return structuralInput(value) !== null;
 }
 
 export function formatRG(value: string | number, options: RGOptions = {}): string {
-  const rg = normalizeRG(value, options);
+  const parsedOptions = optionsObject(options, 'RGOptions');
+  const rg = normalizeForState(value, stateForNormalization(parsedOptions.state));
   return rg.replace(/^(\d{2})(\d{3})(\d{3})([\dX])$/, '$1.$2.$3-$4');
 }
 
@@ -125,7 +137,7 @@ function generateSP(formatted: boolean): string {
   return formatted ? formatRG(rg, { state: 'SP' }) : rg;
 }
 
-function generateRGResult(options: GenerateRGOptions = {}): GeneratedRG {
+function generateRGResult(options: Record<string, unknown>): GeneratedRG {
   const state = selectState(options.state);
   return {
     value: generateSP(booleanOption(options.formatted, 'formatted')),
@@ -136,10 +148,8 @@ function generateRGResult(options: GenerateRGOptions = {}): GeneratedRG {
 export function generateRG(options: GenerateRGOptions & { includeState: true }): GeneratedRG;
 export function generateRG(options?: GenerateRGOptions & { includeState?: false }): string;
 export function generateRG(options: GenerateRGOptions = {}): string | GeneratedRG {
-  const includeState = options.includeState ?? false;
-  if (includeState !== true && includeState !== false) {
-    throw new RangeError(`includeState must be boolean: ${String(includeState)}.`);
-  }
-  const generated = generateRGResult(options);
+  const parsedOptions = optionsObject(options, 'GenerateRGOptions');
+  const includeState = booleanOption(parsedOptions.includeState, 'includeState');
+  const generated = generateRGResult(parsedOptions);
   return includeState ? generated : generated.value;
 }

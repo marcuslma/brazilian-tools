@@ -42,6 +42,8 @@ test('formats mobile or landline numbers nationally and internationally', () => 
   assert.equal(formatPhoneBR('11987654321'), '(11) 98765-4321');
   assert.equal(formatPhoneBR('2123456789'), '(21) 2345-6789');
   assert.equal(formatPhoneBR('11987654321', { international: true }), '+55 11 98765-4321');
+  assert.throws(() => formatPhoneBR('11987654321', { international: 'false' }), RangeError);
+  assert.throws(() => formatPhoneBR('11987654321', null), TypeError);
   assert.throws(() => formatPhoneBR('1198765432'), TypeError);
 });
 
@@ -79,10 +81,44 @@ test('generates valid mobile and landline numbers with DDD and formatting option
   assert.throws(() => generatePhoneBR({ ddd: '20' }), RangeError);
 });
 
+test('generates either phone type when the type option is omitted', () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+  let randomIntegerValue = 0;
+  Object.defineProperty(globalThis, 'crypto', {
+    configurable: true,
+    value: {
+      getRandomValues(values) {
+        values.fill(values.length === 1 ? randomIntegerValue++ : 0);
+        return values;
+      },
+    },
+  });
+
+  try {
+    const mobile = generatePhoneBR({ ddd: '11' });
+    const landline = generatePhoneBR({ ddd: '11' });
+    assert.match(mobile, /^119\d{8}$/);
+    assert.match(landline, /^11[2-5]\d{7}$/);
+  } finally {
+    if (descriptor) Object.defineProperty(globalThis, 'crypto', descriptor);
+    else delete globalThis.crypto;
+  }
+});
+
 test('rejects an unknown phone type at runtime', () => {
   assert.throws(() => generatePhoneBR({ type: 'typo' }), RangeError);
+  assert.throws(() => generatePhoneBR({ type: null }), RangeError);
+  assert.throws(() => generatePhoneBR({ ddd: null }), RangeError);
   assert.throws(() => generatePhoneBR({ formatted: 'false' }), RangeError);
   assert.throws(() => generatePhoneBR({ international: 'false' }), RangeError);
+  assert.throws(() => generatePhoneBR({ international: null }), RangeError);
+});
+
+test('rejects malformed phone option containers', () => {
+  for (const options of [null, 'phone', []]) {
+    assert.throws(() => generatePhoneBR(options), TypeError);
+    assert.throws(() => formatPhoneBR('11987654321', options), TypeError);
+  }
 });
 
 test('exposes the 67 official geographic DDDs without allowing mutation', () => {

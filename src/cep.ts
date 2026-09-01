@@ -1,4 +1,4 @@
-import { inputString, onlyDigits } from './internal.js';
+import { booleanOption, inputString, onlyDigits, optionsObject } from './internal.js';
 
 export type CEPProvider = 'auto' | 'brasilapi' | 'viacep';
 export type CEPResolvedProvider = Exclude<CEPProvider, 'auto'>;
@@ -82,13 +82,22 @@ interface CEPErrorOptions {
   timedOut?: boolean;
 }
 
+function resolvedProviderOption(value: unknown, name: string): CEPResolvedProvider | undefined {
+  if (value === undefined) return undefined;
+  if (value !== 'brasilapi' && value !== 'viacep') {
+    throw new RangeError(`${name} must be brasilapi or viacep: ${String(value)}.`);
+  }
+  return value;
+}
+
 export class CEPNotFoundError extends Error {
   override readonly name = 'CEPNotFoundError';
   readonly provider?: CEPResolvedProvider;
 
   constructor(cep: string, provider?: CEPResolvedProvider) {
     super(`CEP not found: ${formatCEP(cep)}.`);
-    if (provider !== undefined) this.provider = provider;
+    const resolvedProvider = resolvedProviderOption(provider, 'provider');
+    if (resolvedProvider !== undefined) this.provider = resolvedProvider;
   }
 }
 
@@ -99,10 +108,22 @@ export class CEPRequestError extends Error {
   readonly timedOut: boolean;
 
   constructor(message: string, options: CEPErrorOptions = {}) {
-    super(message, options.cause === undefined ? undefined : { cause: options.cause });
-    this.timedOut = options.timedOut ?? false;
-    if (options.provider !== undefined) this.provider = options.provider;
-    if (options.status !== undefined) this.status = options.status;
+    const parsedOptions = optionsObject(options, 'CEPErrorOptions');
+    const provider = resolvedProviderOption(parsedOptions.provider, 'provider');
+    const status = parsedOptions.status;
+    if (
+      status !== undefined &&
+      (typeof status !== 'number' || !Number.isInteger(status) || status < 100 || status > 599)
+    ) {
+      throw new RangeError(`status must be an HTTP status code: ${String(status)}.`);
+    }
+    const cause = parsedOptions.cause;
+    const timedOut = booleanOption(parsedOptions.timedOut, 'timedOut');
+
+    super(message, cause === undefined ? undefined : { cause });
+    this.timedOut = timedOut;
+    if (provider !== undefined) this.provider = provider;
+    if (status !== undefined) this.status = status;
   }
 }
 
@@ -129,6 +150,83 @@ export function normalizeCEP(value: string | number): string {
 export function formatCEP(value: string | number): string {
   const cep = normalizeCEP(value);
   return cep.replace(/^(\d{5})(\d{3})$/, '$1-$2');
+}
+
+interface NormalizedLookupCEPOptions extends ProviderLookupCEPOptions {
+  provider: CEPProvider;
+  fallbackOnNotFound: boolean;
+  includeRaw: boolean;
+  timeoutMs: number;
+}
+
+function cacheOption(value: unknown): CEPCache | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || (typeof value !== 'object' && typeof value !== 'function')) {
+    throw new TypeError('cache must implement get and set methods.');
+  }
+  const cache = value as { get?: unknown; set?: unknown };
+  if (typeof cache.get !== 'function' || typeof cache.set !== 'function') {
+    throw new TypeError('cache must implement get and set methods.');
+  }
+  return cache as CEPCache;
+}
+
+function fetcherOption(value: unknown): CEPFetcher | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'function') throw new TypeError('fetcher must be a function.');
+  return value as CEPFetcher;
+}
+
+function signalOption(value: unknown): CEPAbortSignal | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || typeof value !== 'object') {
+    throw new TypeError('signal must implement the CEPAbortSignal interface.');
+  }
+  const signal = value as {
+    aborted?: unknown;
+    addEventListener?: unknown;
+    removeEventListener?: unknown;
+  };
+  if (
+    typeof signal.aborted !== 'boolean' ||
+    typeof signal.addEventListener !== 'function' ||
+    typeof signal.removeEventListener !== 'function'
+  ) {
+    throw new TypeError('signal must implement the CEPAbortSignal interface.');
+  }
+  return signal as CEPAbortSignal;
+}
+
+function parseLookupCEPOptions(value: unknown, name: string): NormalizedLookupCEPOptions {
+  const options = optionsObject(value, name);
+  const provider = options.provider === undefined ? 'auto' : options.provider;
+  if (provider !== 'auto' && provider !== 'brasilapi' && provider !== 'viacep') {
+    throw new RangeError(`Unsupported CEP provider: ${String(provider)}.`);
+  }
+
+  const timeoutMs = options.timeoutMs === undefined ? 5_000 : options.timeoutMs;
+  if (
+    typeof timeoutMs !== 'number' ||
+    !Number.isInteger(timeoutMs) ||
+    timeoutMs <= 0 ||
+    timeoutMs > 2_147_483_647
+  ) {
+    throw new RangeError('timeoutMs must be between 1 and 2147483647 milliseconds.');
+  }
+
+  const cache = cacheOption(options.cache);
+  const fetcher = fetcherOption(options.fetcher);
+  const signal = signalOption(options.signal);
+
+  return {
+    provider,
+    fallbackOnNotFound: booleanOption(options.fallbackOnNotFound, 'fallbackOnNotFound', true),
+    includeRaw: booleanOption(options.includeRaw, 'includeRaw'),
+    timeoutMs,
+    ...(cache === undefined ? {} : { cache }),
+    ...(fetcher === undefined ? {} : { fetcher }),
+    ...(signal === undefined ? {} : { signal }),
+  };
 }
 
 function field(data: Record<string, unknown>, key: string): string {
@@ -325,28 +423,22 @@ export async function lookupCEP(
   value: string | number,
   options: LookupCEPOptions = {},
 ): Promise<CEPAddress> {
+  const parsedOptions = parseLookupCEPOptions(options, 'LookupCEPOptions');
+  const { cache, fallbackOnNotFound, fetcher, includeRaw, provider, signal, timeoutMs } =
+    parsedOptions;
   const cep = normalizeCEP(value);
-  const timeoutMs = options.timeoutMs ?? 5_000;
-  if (!Number.isInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) {
-    throw new RangeError('timeoutMs must be between 1 and 2147483647 milliseconds.');
-  }
-
-  const provider = options.provider ?? 'auto';
-  if (provider !== 'auto' && provider !== 'brasilapi' && provider !== 'viacep') {
-    throw new RangeError(`Unsupported CEP provider: ${String(provider)}.`);
-  }
   const throwIfAborted = (): void => {
-    if (options.signal?.aborted) {
+    if (signal?.aborted) {
       throw new CEPRequestError('CEP lookup was cancelled by the caller.', {
-        cause: options.signal.reason,
+        cause: signal.reason,
       });
     }
   };
   throwIfAborted();
-  const cacheKey = `${provider}:${options.includeRaw ? 'raw' : 'normalized'}:${cep}`;
+  const cacheKey = `${provider}:${includeRaw ? 'raw' : 'normalized'}:${cep}`;
   let cached: CEPAddress | undefined;
   try {
-    cached = options.cache === undefined ? undefined : await options.cache.get(cacheKey);
+    cached = cache === undefined ? undefined : await cache.get(cacheKey);
   } catch (error) {
     throw new CEPRequestError('Unable to read the CEP cache.', { cause: error });
   }
@@ -354,26 +446,32 @@ export async function lookupCEP(
   if (cached !== undefined) return cached;
   const store = async (address: CEPAddress): Promise<CEPAddress> => {
     try {
-      await options.cache?.set(cacheKey, address);
+      await cache?.set(cacheKey, address);
     } catch (error) {
       throw new CEPRequestError('Unable to write the CEP cache.', { cause: error });
     }
     return address;
   };
   const deadline = Date.now() + timeoutMs;
+  const requestOptions: ProviderLookupCEPOptions = {
+    includeRaw,
+    timeoutMs,
+    ...(fetcher === undefined ? {} : { fetcher }),
+    ...(signal === undefined ? {} : { signal }),
+  };
 
   if (provider !== 'auto') {
-    return store(await requestCEP(cep, provider, { ...options, timeoutMs }));
+    return store(await requestCEP(cep, provider, requestOptions));
   }
 
   let address: CEPAddress;
   try {
-    address = await requestCEP(cep, 'brasilapi', { ...options, timeoutMs });
+    address = await requestCEP(cep, 'brasilapi', requestOptions);
   } catch (error) {
     if (!(error instanceof CEPNotFoundError) && !(error instanceof CEPRequestError)) throw error;
     if (error instanceof CEPRequestError && error.timedOut) throw error;
-    if (options.signal?.aborted) throw error;
-    if (error instanceof CEPNotFoundError && options.fallbackOnNotFound === false) throw error;
+    if (signal?.aborted) throw error;
+    if (error instanceof CEPNotFoundError && !fallbackOnNotFound) throw error;
     if (
       error instanceof CEPRequestError &&
       error.status !== undefined &&
@@ -385,7 +483,7 @@ export async function lookupCEP(
     }
     const remainingMs = deadline - Date.now();
     if (remainingMs <= 0) throw error;
-    address = await requestCEP(cep, 'viacep', { ...options, timeoutMs: remainingMs });
+    address = await requestCEP(cep, 'viacep', { ...requestOptions, timeoutMs: remainingMs });
   }
   return store(address);
 }
@@ -394,10 +492,13 @@ export async function lookupCEPs(
   values: readonly (string | number)[],
   options: LookupCEPsOptions = {},
 ): Promise<CEPAddress[]> {
-  const { concurrency = 4, ...lookupOptions } = options;
-  if (!Number.isInteger(concurrency) || concurrency < 1) {
+  if (!Array.isArray(values)) throw new TypeError('values must be an array.');
+  const parsedOptions = optionsObject(options, 'LookupCEPsOptions');
+  const concurrency = parsedOptions.concurrency === undefined ? 4 : parsedOptions.concurrency;
+  if (typeof concurrency !== 'number' || !Number.isInteger(concurrency) || concurrency < 1) {
     throw new RangeError('concurrency must be a positive integer.');
   }
+  const lookupOptions = parseLookupCEPOptions(parsedOptions, 'LookupCEPsOptions');
 
   const results = new Array<CEPAddress>(values.length);
   let nextIndex = 0;

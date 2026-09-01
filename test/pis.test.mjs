@@ -18,6 +18,13 @@ test('normalizes and formats PIS/PASEP/NIT', () => {
 
 test('rejects a non-boolean formatted option at runtime', () => {
   assert.throws(() => generatePIS({ formatted: 'false' }), RangeError);
+  assert.throws(() => generatePIS({ formatted: null }), RangeError);
+});
+
+test('rejects malformed PIS generator option containers', () => {
+  for (const options of [null, 'formatted', []]) {
+    assert.throws(() => generatePIS(options), TypeError);
+  }
 });
 
 test('generates a valid PIS/PASEP/NIT', () => {

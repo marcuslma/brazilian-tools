@@ -17,64 +17,118 @@
   "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "import": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/types/index.d.cts",
+        "default": "./dist/cjs/index.js"
+      }
     },
     "./cpf": {
-      "types": "./dist/types/cpf.d.ts",
-      "import": "./dist/esm/cpf.js",
-      "require": "./dist/cjs/cpf.js"
+      "import": {
+        "types": "./dist/types/cpf.d.ts",
+        "default": "./dist/esm/cpf.js"
+      },
+      "require": {
+        "types": "./dist/types/cpf.d.cts",
+        "default": "./dist/cjs/cpf.js"
+      }
     },
     "./cnpj": {
-      "types": "./dist/types/cnpj.d.ts",
-      "import": "./dist/esm/cnpj.js",
-      "require": "./dist/cjs/cnpj.js"
+      "import": {
+        "types": "./dist/types/cnpj.d.ts",
+        "default": "./dist/esm/cnpj.js"
+      },
+      "require": {
+        "types": "./dist/types/cnpj.d.cts",
+        "default": "./dist/cjs/cnpj.js"
+      }
     },
     "./rg": {
-      "types": "./dist/types/rg.d.ts",
-      "import": "./dist/esm/rg.js",
-      "require": "./dist/cjs/rg.js"
+      "import": {
+        "types": "./dist/types/rg.d.ts",
+        "default": "./dist/esm/rg.js"
+      },
+      "require": {
+        "types": "./dist/types/rg.d.cts",
+        "default": "./dist/cjs/rg.js"
+      }
     },
     "./phone": {
-      "types": "./dist/types/phone.d.ts",
-      "import": "./dist/esm/phone.js",
-      "require": "./dist/cjs/phone.js"
+      "import": {
+        "types": "./dist/types/phone.d.ts",
+        "default": "./dist/esm/phone.js"
+      },
+      "require": {
+        "types": "./dist/types/phone.d.cts",
+        "default": "./dist/cjs/phone.js"
+      }
     },
     "./cep": {
-      "types": "./dist/types/cep.d.ts",
-      "import": "./dist/esm/cep.js",
-      "require": "./dist/cjs/cep.js"
+      "import": {
+        "types": "./dist/types/cep.d.ts",
+        "default": "./dist/esm/cep.js"
+      },
+      "require": {
+        "types": "./dist/types/cep.d.cts",
+        "default": "./dist/cjs/cep.js"
+      }
     },
     "./cnh": {
-      "types": "./dist/types/cnh.d.ts",
-      "import": "./dist/esm/cnh.js",
-      "require": "./dist/cjs/cnh.js"
+      "import": {
+        "types": "./dist/types/cnh.d.ts",
+        "default": "./dist/esm/cnh.js"
+      },
+      "require": {
+        "types": "./dist/types/cnh.d.cts",
+        "default": "./dist/cjs/cnh.js"
+      }
     },
     "./currency": {
-      "types": "./dist/types/currency.d.ts",
-      "import": "./dist/esm/currency.js",
-      "require": "./dist/cjs/currency.js"
+      "import": {
+        "types": "./dist/types/currency.d.ts",
+        "default": "./dist/esm/currency.js"
+      },
+      "require": {
+        "types": "./dist/types/currency.d.cts",
+        "default": "./dist/cjs/currency.js"
+      }
     },
     "./license-plate": {
-      "types": "./dist/types/license-plate.d.ts",
-      "import": "./dist/esm/license-plate.js",
-      "require": "./dist/cjs/license-plate.js"
+      "import": {
+        "types": "./dist/types/license-plate.d.ts",
+        "default": "./dist/esm/license-plate.js"
+      },
+      "require": {
+        "types": "./dist/types/license-plate.d.cts",
+        "default": "./dist/cjs/license-plate.js"
+      }
     },
     "./pis": {
-      "types": "./dist/types/pis.d.ts",
-      "import": "./dist/esm/pis.js",
-      "require": "./dist/cjs/pis.js"
+      "import": {
+        "types": "./dist/types/pis.d.ts",
+        "default": "./dist/esm/pis.js"
+      },
+      "require": {
+        "types": "./dist/types/pis.d.cts",
+        "default": "./dist/cjs/pis.js"
+      }
     },
     "./states": {
-      "types": "./dist/types/states.d.ts",
-      "import": "./dist/esm/states.js",
-      "require": "./dist/cjs/states.js"
+      "import": {
+        "types": "./dist/types/states.d.ts",
+        "default": "./dist/esm/states.js"
+      },
+      "require": {
+        "types": "./dist/types/states.d.cts",
+        "default": "./dist/cjs/states.js"
+      }
     }
   },
   "files": [
     "dist",
-    "src",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
@@ -87,19 +141,21 @@
     "clean": "node scripts/clean.mjs",
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "node scripts/build-cjs.mjs",
-    "build:types": "tsc -p tsconfig.types.json",
+    "build:types": "tsc -p tsconfig.types.json && node scripts/build-cjs-types.mjs",
     "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run build:types",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs",
     "test:coverage": "npm run build && c8 --check-coverage --lines 100 --functions 100 --branches 95 --include 'dist/esm/**/*.js' node --test test/*.test.mjs",
     "lint": "eslint .",
+    "lint:package": "publint",
+    "audit": "npm audit --audit-level=high",
     "format": "prettier --write \"**/*.{json,md,mjs,ts,yml}\"",
     "format:check": "prettier --check \"**/*.{json,md,mjs,ts,yml}\"",
     "smoke:package": "node scripts/package-smoke.mjs",
-    "check": "npm run lint && npm run format:check && npm run typecheck && npm run test:coverage && npm run smoke:package && npm pack --dry-run",
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm run test:coverage && npm run smoke:package && npm run lint:package && npm pack --dry-run",
     "prepack": "npm run build",
     "prepare": "npm run build",
-    "prepublishOnly": "npm test"
+    "prepublishOnly": "npm run check"
   },
   "keywords": [
     "brasil",
@@ -120,10 +176,12 @@
     "@eslint/js": "^10.0.1",
     "c8": "^12.0.0",
     "esbuild": "^0.28.2",
-    "eslint": "^10.9.0",
+    "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
-    "globals": "^17.11.0",
+    "globals": "^17.12.0",
     "prettier": "^3.9.6",
-    "typescript": "^7.0.2"
+    "publint": "^0.3.24",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.69.0"
   }
 }

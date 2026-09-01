@@ -18,6 +18,13 @@ test('normalizes and formats CNH', () => {
 
 test('rejects a non-boolean formatted option at runtime', () => {
   assert.throws(() => generateCNH({ formatted: 'false' }), RangeError);
+  assert.throws(() => generateCNH({ formatted: null }), RangeError);
+});
+
+test('rejects malformed CNH generator option containers', () => {
+  for (const options of [null, 'formatted', []]) {
+    assert.throws(() => generateCNH(options), TypeError);
+  }
 });
 
 test('generates a valid CNH', () => {

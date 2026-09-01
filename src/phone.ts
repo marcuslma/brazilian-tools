@@ -1,4 +1,10 @@
-import { booleanOption, inputString, randomFrom, randomInteger } from './internal.js';
+import {
+  booleanOption,
+  inputString,
+  optionsObject,
+  randomFrom,
+  randomInteger,
+} from './internal.js';
 
 /** Geographic area codes currently in use in Brazil's numbering plan. */
 export const SUPPORTED_PHONE_DDDS = Object.freeze([
@@ -137,13 +143,22 @@ function normalizeDigits(digits: string): NormalizedPhoneBR | null {
 }
 
 export function generatePhoneBR(options: GeneratePhoneBROptions = {}): string {
-  const formatted = booleanOption(options.formatted, 'formatted');
-  const international = booleanOption(options.international, 'international');
-  const ddd = options.ddd ?? SUPPORTED_PHONE_DDDS[randomInteger(SUPPORTED_PHONE_DDDS.length)]!;
-  if (!(SUPPORTED_PHONE_DDDS as readonly string[]).includes(ddd)) {
+  const parsedOptions = optionsObject(options, 'GeneratePhoneBROptions');
+  const formatted = booleanOption(parsedOptions.formatted, 'formatted');
+  const international = booleanOption(parsedOptions.international, 'international');
+  const ddd =
+    parsedOptions.ddd === undefined
+      ? SUPPORTED_PHONE_DDDS[randomInteger(SUPPORTED_PHONE_DDDS.length)]!
+      : parsedOptions.ddd;
+  if (typeof ddd !== 'string' || !(SUPPORTED_PHONE_DDDS as readonly string[]).includes(ddd)) {
     throw new RangeError('DDD must belong to the list of supported area codes.');
   }
-  const type = options.type ?? (randomInteger(2) === 0 ? 'mobile' : 'landline');
+  const type =
+    parsedOptions.type === undefined
+      ? randomInteger(2) === 0
+        ? 'mobile'
+        : 'landline'
+      : parsedOptions.type;
   if (type !== 'mobile' && type !== 'landline') {
     throw new RangeError(`Unsupported phone type: ${String(type)}.`);
   }
@@ -172,6 +187,8 @@ export function normalizePhoneBR(value: string | number): string {
 }
 
 export function formatPhoneBR(value: string | number, options: FormatPhoneBROptions = {}): string {
+  const parsedOptions = optionsObject(options, 'FormatPhoneBROptions');
+  const international = booleanOption(parsedOptions.international, 'international');
   const phone = normalizeInput(value);
   if (!phone) {
     throw new TypeError(
@@ -180,7 +197,7 @@ export function formatPhoneBR(value: string | number, options: FormatPhoneBROpti
   }
   const split = phone.type === 'mobile' ? 5 : 4;
   const number = `${phone.number.slice(0, split)}-${phone.number.slice(split)}`;
-  return options.international ? `+55 ${phone.ddd} ${number}` : `(${phone.ddd}) ${number}`;
+  return international ? `+55 ${phone.ddd} ${number}` : `(${phone.ddd}) ${number}`;
 }
 
 export function parsePhoneBR(value: string | number): ParsedPhoneBR {

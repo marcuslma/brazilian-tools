@@ -50,5 +50,13 @@ test('normalizes, formats, and identifies plates', () => {
 
 test('rejects an unknown license plate kind at runtime', () => {
   assert.throws(() => generateLicensePlate({ kind: 'typo' }), RangeError);
+  assert.throws(() => generateLicensePlate({ kind: null }), RangeError);
   assert.throws(() => generateLicensePlate({ formatted: 'false' }), RangeError);
+  assert.throws(() => generateLicensePlate({ formatted: null }), RangeError);
+});
+
+test('rejects malformed license plate generator option containers', () => {
+  for (const options of [null, 'formatted', []]) {
+    assert.throws(() => generateLicensePlate(options), TypeError);
+  }
 });

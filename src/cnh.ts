@@ -1,4 +1,4 @@
-import { booleanOption, inputString, randomFrom } from './internal.js';
+import { booleanOption, inputString, optionsObject, randomFrom } from './internal.js';
 
 export interface GenerateCNHOptions {
   formatted?: boolean;
@@ -52,7 +52,8 @@ export function formatCNH(value: string | number): string {
 }
 
 export function generateCNH(options: GenerateCNHOptions = {}): string {
-  const formatted = booleanOption(options.formatted, 'formatted');
+  const parsedOptions = optionsObject(options, 'GenerateCNHOptions');
+  const formatted = booleanOption(parsedOptions.formatted, 'formatted');
   let base: string;
   let cnh: string;
   do {

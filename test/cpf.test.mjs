@@ -25,6 +25,13 @@ test('generates a valid CPF, optionally formatted', () => {
 
 test('rejects a non-boolean formatted option at runtime', () => {
   assert.throws(() => generateCPF({ formatted: 'false' }), RangeError);
+  assert.throws(() => generateCPF({ formatted: null }), RangeError);
+});
+
+test('rejects malformed CPF generator option containers', () => {
+  for (const options of [null, 'formatted', []]) {
+    assert.throws(() => generateCPF(options), TypeError);
+  }
 });
 
 test('formats CPF and rejects structurally invalid values', () => {

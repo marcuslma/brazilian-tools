@@ -1,4 +1,4 @@
-import { booleanOption, inputString, randomFrom } from './internal.js';
+import { booleanOption, inputString, optionsObject, randomFrom } from './internal.js';
 
 export interface GenerateCPFOptions {
   formatted?: boolean;
@@ -41,7 +41,8 @@ export function formatCPF(value: string | number): string {
 }
 
 export function generateCPF(options: GenerateCPFOptions = {}): string {
-  const formatted = booleanOption(options.formatted, 'formatted');
+  const parsedOptions = optionsObject(options, 'GenerateCPFOptions');
+  const formatted = booleanOption(parsedOptions.formatted, 'formatted');
   let base: string;
   do base = randomFrom('0123456789', 9);
   while (/^(\d)\1{8}$/.test(base));

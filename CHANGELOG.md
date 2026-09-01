@@ -19,6 +19,9 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Subpath exports para `cpf`, `cnpj`, `rg`, `phone` e `cep`.
 - Validação estrutural conservadora de RGs sem algoritmo estadual implementado.
 - Política configurável de fallback para CEP não encontrado.
+- Validação estrita de opções runtime, incluindo containers inválidos, flags, enums e interfaces de CEP antes de cache ou rede.
+- Declarações CommonJS `.d.cts`, smoke test de consumidor CJS/ESM e inspeção automatizada do conteúdo do tarball.
+- `publint`, audit de dependências, Gitleaks, Dependabot e workflow de release com OIDC/proveniência.
 
 ### Alterado
 
@@ -39,6 +42,8 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Falhas do cache injetado passam a ser encapsuladas em `CEPRequestError` e preservadas em `cause`.
 - Coordenadas da BrasilAPI fora das faixas geográficas válidas deixam de ser publicadas.
 - O script de limpeza passa a usar `node:fs`, mantendo compatibilidade com Windows.
+- O pacote não publica mais fontes TypeScript ou source maps; `prepublishOnly` executa o gate completo.
+- O compilador de desenvolvimento passou para TypeScript 6, faixa atualmente compatível com `typescript-eslint`.
 
 ## [0.1.0] - 2026-07-21
 

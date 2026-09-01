@@ -21,7 +21,7 @@ await build({
   outbase: 'src',
   outdir: 'dist/cjs',
   platform: 'node',
-  sourcemap: true,
+  sourcemap: false,
   target: 'es2022',
 });
 

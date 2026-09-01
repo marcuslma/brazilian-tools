@@ -1,6 +1,6 @@
 # brazilian-tools
 
-Utilitários brasileiros em TypeScript 7, ESM/CJS e **sem dependências de produção**.
+Utilitários brasileiros em TypeScript, ESM/CJS e **sem dependências de produção**.
 
 [Playground interativo](https://github.com/marcuslma/brazilian-tools-playground) para testar as funções no navegador.
 
@@ -72,6 +72,17 @@ import { validateCPF } from 'brazilian-tools';
 // less explicit for tree-shaking
 import * as BrazilianTools from 'brazilian-tools';
 ```
+
+### Contrato de opções em runtime
+
+Nas APIs que recebem `options`, apenas `undefined` significa “usar o padrão documentado”.
+`null`, primitivas, arrays e objetos não simples geram `TypeError`. Campos conhecidos são
+validados sem coerção: uma string como `{ international: 'false' }` ou um enum, DDD,
+estado, timeout ou concorrência inválidos geram `RangeError`.
+
+As consultas de CEP também validam `fetcher`, `cache`, `signal` e a lista de valores antes
+de acessar cache ou rede. Isso torna erros de integração previsíveis e preserva
+`CEPRequestError` para falhas operacionais reais.
 
 ## Uso
 
@@ -282,8 +293,8 @@ const addresses = await lookupCEPs(['01001000', '20040002'], {
 
 `lookupCEP` lança:
 
-- `TypeError` para CEP estruturalmente inválido;
-- `RangeError` para provedor ou timeout inválido; `lookupCEPs` também usa essa classe para concorrência inválida;
+- `TypeError` para CEP, opções ou interfaces de CEP estruturalmente inválidos;
+- `RangeError` para flags, provedor ou timeout inválidos; `lookupCEPs` também usa essa classe para concorrência inválida;
 - `CEPNotFoundError` quando o provedor informa que o CEP não existe;
 - `CEPRequestError` para falhas de rede, timeout, HTTP, resposta inválida ou cache injetado.
 
@@ -320,17 +331,30 @@ O cache é responsabilidade do consumidor e suas operações podem ser assíncro
 ```bash
 npm install --include=dev
 npm run lint
+npm run lint:package
 npm run format:check
 npm run typecheck
 npm test
 npm run test:coverage
+npm run audit
 npm run check
 npm run smoke:package
 ```
 
-`npm run smoke:package` gera o tarball, instala o pacote em um consumidor temporário e verifica import ESM, `require` CommonJS, runtime e declarações TypeScript.
+`npm run smoke:package` gera o tarball, instala o pacote em um consumidor temporário e verifica todos os subpaths em ESM, `require` CommonJS, runtime e declarações TypeScript ESM/CJS. Ele também impede que `src/` ou source maps voltem ao pacote publicado.
 
 `npm run test:coverage` executa a suíte com o `c8`, cobrindo somente o build ESM e exigindo 100% de linhas, 100% de funções e 95% de branches; isso mantém o quality gate consistente entre as versões de Node suportadas.
+
+## Manutenção e publicação
+
+O workflow [release.yml](.github/workflows/release.yml) publica somente por tag `v<versão>` ou disparo manual com a versão exata do `package.json`. Antes da primeira publicação, o mantenedor deve:
+
+- configurar `marcuslma/brazilian-tools` como [Trusted Publisher do npm](https://docs.npmjs.com/trusted-publishers/) para o workflow `release.yml` e, se usado, o environment `npm`;
+- habilitar 2FA na conta npm e proteger tags de release no GitHub;
+- criar o environment `npm` no GitHub com as regras de proteção desejadas;
+- executar `npm run check` e `RELEASE_VERSION=0.1.0 node scripts/assert-release.mjs` com a versão que será publicada.
+
+O release usa OIDC e `npm publish --provenance`; não configure nem versione `NPM_TOKEN`. A publicação depende de runner hospedado pelo GitHub, Node 24 e da configuração externa do Trusted Publisher.
 
 ## Licença
 

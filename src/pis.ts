@@ -1,4 +1,4 @@
-import { booleanOption, inputString, randomFrom } from './internal.js';
+import { booleanOption, inputString, optionsObject, randomFrom } from './internal.js';
 
 export interface GeneratePISOptions {
   formatted?: boolean;
@@ -40,7 +40,8 @@ export function formatPIS(value: string | number): string {
 }
 
 export function generatePIS(options: GeneratePISOptions = {}): string {
-  const formatted = booleanOption(options.formatted, 'formatted');
+  const parsedOptions = optionsObject(options, 'GeneratePISOptions');
+  const formatted = booleanOption(parsedOptions.formatted, 'formatted');
   let base: string;
   do base = randomFrom('0123456789', 10);
   while (/^(\d)\1{9}$/.test(base));

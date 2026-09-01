@@ -1,4 +1,4 @@
-import { booleanOption, inputString, randomFrom } from './internal.js';
+import { booleanOption, inputString, optionsObject, randomFrom } from './internal.js';
 
 export type LicensePlateKind = 'old' | 'mercosul';
 
@@ -28,8 +28,9 @@ function kindOf(value: string): LicensePlateKind {
 }
 
 export function generateLicensePlate(options: GenerateLicensePlateOptions = {}): string {
-  const formatted = booleanOption(options.formatted, 'formatted');
-  const kind = options.kind ?? 'mercosul';
+  const parsedOptions = optionsObject(options, 'GenerateLicensePlateOptions');
+  const formatted = booleanOption(parsedOptions.formatted, 'formatted');
+  const kind = parsedOptions.kind === undefined ? 'mercosul' : parsedOptions.kind;
   if (kind !== 'old' && kind !== 'mercosul') {
     throw new RangeError(`Unsupported license plate kind: ${String(kind)}.`);
   }

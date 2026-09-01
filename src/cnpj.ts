@@ -1,4 +1,4 @@
-import { booleanOption, inputString, randomFrom } from './internal.js';
+import { booleanOption, inputString, optionsObject, randomFrom } from './internal.js';
 
 export type CNPJKind = 'numeric' | 'alphanumeric';
 
@@ -57,8 +57,9 @@ export function formatCNPJ(value: string | number): string {
 }
 
 export function generateCNPJ(options: GenerateCNPJOptions = {}): string {
-  const formatted = booleanOption(options.formatted, 'formatted');
-  const kind = options.kind ?? 'numeric';
+  const parsedOptions = optionsObject(options, 'GenerateCNPJOptions');
+  const formatted = booleanOption(parsedOptions.formatted, 'formatted');
+  const kind = parsedOptions.kind === undefined ? 'numeric' : parsedOptions.kind;
   if (kind !== 'numeric' && kind !== 'alphanumeric') {
     throw new RangeError(`Unsupported CNPJ kind: ${String(kind)}.`);
   }
