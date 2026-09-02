@@ -25,5 +25,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run audit
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@v3
       - run: npm run check
